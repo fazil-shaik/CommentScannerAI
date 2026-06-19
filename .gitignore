@@ -1,0 +1,17 @@
+node_modules
+.env
+dist
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+db.sqlite3
+*.log
+*.pot
+*.pyc

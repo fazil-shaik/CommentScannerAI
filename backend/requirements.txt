@@ -1,0 +1,14 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+flask
+flask-cors
+gunicorn
+psutil
+pdfextractor
+pdfminer.six
+pdfplumber
+pdf2image
+pytesseract
