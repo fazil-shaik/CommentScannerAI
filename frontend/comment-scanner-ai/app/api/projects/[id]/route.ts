@@ -50,7 +50,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       neutral: 0,
     };
 
-    projectComments.forEach((c) => {
+    projectComments.forEach((c: { sentiment: string; toxicity: number | null; topic: string; emotion: string; }) => {
       // Sentiment
       if (c.sentiment === "positive") positiveCount++;
       else if (c.sentiment === "negative") negativeCount++;
@@ -78,9 +78,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Compile Top Complaints and Top Feature Requests from raw comments
     const topComplaints = projectComments
-      .filter((c) => c.sentiment === "negative" && (c.topic === "bugs" || c.topic === "performance" || c.topic === "pricing"))
+      .filter((c: { sentiment: string; topic: string; }) => c.sentiment === "negative" && (c.topic === "bugs" || c.topic === "performance" || c.topic === "pricing"))
       .slice(0, 5)
-      .map((c) => ({
+      .map((c: { id: any; text: any; topic: any; sentiment: any; }) => ({
         id: c.id,
         text: c.text,
         topic: c.topic,
@@ -88,9 +88,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       }));
 
     const topFeatureRequests = projectComments
-      .filter((c) => c.topic === "features")
+      .filter((c: { topic: string; }) => c.topic === "features")
       .slice(0, 5)
-      .map((c) => ({
+      .map((c: { id: any; text: any; topic: any; sentiment: any; }) => ({
         id: c.id,
         text: c.text,
         topic: c.topic,
