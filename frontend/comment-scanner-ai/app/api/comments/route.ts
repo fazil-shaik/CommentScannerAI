@@ -140,17 +140,59 @@ export async function POST(req: NextRequest) {
         platform: "CSV",
       }));
     } else if (sourceType === "youtube") {
-      // YouTube import: parse URL and extract comments
-      commentsToProcess = YOUTUBE_MOCK_COMMENTS.map((c) => ({
-        ...c,
-        text: `${c.text} (imported from YouTube video ${data.substring(data.length - 11)})`,
-      }));
+      // YouTube import: call Python scraper
+      try {
+        const scrapeResponse = await fetch("http://127.0.0.1:8000/scrape/youtube", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: data }),
+        });
+        if (scrapeResponse.ok) {
+          const scrapeData = await scrapeResponse.json();
+          commentsToProcess = scrapeData.comments.map((c: any) => ({
+            text: c.text,
+            author: c.author,
+            platform: "YouTube"
+          }));
+        }
+      } catch (e) {
+        console.error("Error calling Python YouTube scraper:", e);
+      }
+      
+      // Fallback if scraping yielded nothing
+      if (commentsToProcess.length === 0) {
+        commentsToProcess = YOUTUBE_MOCK_COMMENTS.map((c) => ({
+          ...c,
+          text: `${c.text} (simulated YouTube comment fallback for ${data.substring(0, 30)})`,
+        }));
+      }
     } else if (sourceType === "reddit") {
-      // Reddit import: parse URL and extract comments
-      commentsToProcess = REDDIT_MOCK_COMMENTS.map((c) => ({
-        ...c,
-        text: `${c.text} (imported from Reddit post)`,
-      }));
+      // Reddit import: call Python scraper
+      try {
+        const scrapeResponse = await fetch("http://127.0.0.1:8000/scrape/reddit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: data }),
+        });
+        if (scrapeResponse.ok) {
+          const scrapeData = await scrapeResponse.json();
+          commentsToProcess = scrapeData.comments.map((c: any) => ({
+            text: c.text,
+            author: c.author,
+            platform: "Reddit"
+          }));
+        }
+      } catch (e) {
+        console.error("Error calling Python Reddit scraper:", e);
+      }
+      
+      // Fallback if scraping yielded nothing
+      if (commentsToProcess.length === 0) {
+        commentsToProcess = REDDIT_MOCK_COMMENTS.map((c) => ({
+          ...c,
+          text: `${c.text} (simulated Reddit comment fallback for ${data.substring(0, 30)})`,
+        }));
+      }
     } else {
       return NextResponse.json({ error: "Invalid sourceType. Must be manual, csv, youtube, or reddit." }, { status: 400 });
     }

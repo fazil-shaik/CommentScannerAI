@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from analyzer import analyze_comment
+from scraper import scrape_youtube_comments, scrape_reddit_comments
 
 app = FastAPI(title="CommentScanner AI ML Microservice", version="1.0")
 
@@ -49,9 +50,22 @@ class ChatRequest(BaseModel):
     comments: List[CommentItem]
     question: str
 
+class ScrapeRequest(BaseModel):
+    url: str
+
 @app.get("/")
 def read_root():
     return {"status": "running", "service": "CommentScanner AI ML Backend"}
+
+@app.post("/scrape/youtube")
+def scrape_youtube(request: ScrapeRequest):
+    comments_data = scrape_youtube_comments(request.url)
+    return {"comments": comments_data}
+
+@app.post("/scrape/reddit")
+def scrape_reddit(request: ScrapeRequest):
+    comments_data = scrape_reddit_comments(request.url)
+    return {"comments": comments_data}
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze_texts(request: AnalyzeRequest):

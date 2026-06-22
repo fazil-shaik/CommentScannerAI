@@ -23,8 +23,10 @@ import {
   HelpCircle,
   Clock,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -273,29 +275,40 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
             </div>
           </div>
 
-          <div className="flex items-center gap-2 border border-white/5 bg-black/30 p-1.5 rounded-2xl text-xs font-semibold">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 border border-white/5 bg-black/30 p-1.5 rounded-2xl text-xs font-semibold">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "overview" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                  }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("comments")}
+                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "comments" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                  }`}
+              >
+                Comments ({rawComments.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("chat")}
+                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "chat" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                  }`}
+              >
+                AI Chat
+              </button>
+            </div>
+            
             <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "overview" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                }`}
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="inline-flex items-center justify-center p-2 rounded-xl glass-panel border-white/10 text-neutral-400 hover:text-white transition cursor-pointer"
+              title="Sign Out"
             >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("comments")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "comments" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                }`}
-            >
-              Comments ({rawComments.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("chat")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "chat" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                }`}
-            >
-              AI Chat
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
+
         </div>
       </header>
 
