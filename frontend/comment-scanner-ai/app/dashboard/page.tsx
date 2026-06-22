@@ -268,7 +268,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-mono font-bold uppercase hover:bg-primary hover:text-black transition-all rounded shadow shadow-primary/10 active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-mono font-bold uppercase hover:bg-primary hover:text-white transition-all rounded shadow shadow-primary/10 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Ingest New Node
@@ -625,7 +625,7 @@ export default function Dashboard() {
                       ? "bg-red-600 border-red-500 hover:bg-red-500" 
                       : sourceType === "reddit"
                       ? "bg-orange-600 border-orange-500 hover:bg-orange-500"
-                      : "bg-primary border-primary hover:bg-primary/95 text-black"
+                      : "bg-primary border-primary hover:bg-primary/90 text-white"
                   }`}
                   disabled={creating}
                 >

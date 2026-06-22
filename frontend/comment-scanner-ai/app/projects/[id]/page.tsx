@@ -108,6 +108,107 @@ interface ChatMessage {
   sources?: string[];
 }
 
+// Helper function to format basic markdown text inline and blockwise
+function renderMarkdown(text: string): React.ReactNode[] {
+  if (!text) return [];
+  
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let currentList: { type: "ul" | "ol"; items: React.ReactNode[] } | null = null;
+  let keyCounter = 0;
+
+  const parseInline = (inlineText: string): React.ReactNode[] => {
+    // Basic bold **text** parsing
+    const parts = inlineText.split(/\*\*([^*]+)\*\*/g);
+    return parts.map((part, i) => {
+      if (i % 2 === 1) {
+        return <strong key={i} className="font-bold text-white">{part}</strong>;
+      }
+      return part;
+    });
+  };
+
+  const flushList = () => {
+    if (currentList) {
+      const ListTag = currentList.type;
+      const listClass = currentList.type === "ul" 
+        ? "list-disc pl-5 my-2 space-y-1 text-neutral-300 font-sans" 
+        : "list-decimal pl-5 my-2 space-y-1 text-neutral-300 font-sans";
+      elements.push(
+        <ListTag key={`list-${keyCounter++}`} className={listClass}>
+          {currentList.items.map((item, index) => (
+            <li key={index} className="text-xs leading-relaxed">{item}</li>
+          ))}
+        </ListTag>
+      );
+      currentList = null;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    if (!line) {
+      flushList();
+      continue;
+    }
+
+    // Headers
+    if (line.startsWith("### ")) {
+      flushList();
+      elements.push(
+        <h3 key={`h3-${keyCounter++}`} className="text-[10px] font-bold text-accent tracking-widest uppercase mt-4 mb-1.5 font-mono">
+          {parseInline(line.substring(4))}
+        </h3>
+      );
+    } else if (line.startsWith("## ")) {
+      flushList();
+      elements.push(
+        <h2 key={`h2-${keyCounter++}`} className="text-xs font-bold text-white uppercase tracking-wider mt-5 mb-2 font-mono">
+          {parseInline(line.substring(3))}
+        </h2>
+      );
+    } else if (line.startsWith("# ")) {
+      flushList();
+      elements.push(
+        <h1 key={`h1-${keyCounter++}`} className="text-sm font-bold text-white uppercase tracking-widest mt-6 mb-2 font-mono">
+          {parseInline(line.substring(2))}
+        </h1>
+      );
+    } 
+    // Unordered Lists
+    else if (line.startsWith("- ") || line.startsWith("* ")) {
+      if (!currentList || currentList.type !== "ul") {
+        flushList();
+        currentList = { type: "ul", items: [] };
+      }
+      currentList.items.push(parseInline(line.substring(2)));
+    } 
+    // Ordered Lists
+    else if (/^\d+\.\s/.test(line)) {
+      if (!currentList || currentList.type !== "ol") {
+        flushList();
+        currentList = { type: "ol", items: [] };
+      }
+      const match = line.match(/^\d+\.\s(.*)/);
+      const content = match ? match[1] : line;
+      currentList.items.push(parseInline(content));
+    } 
+    // Regular Paragraph
+    else {
+      flushList();
+      elements.push(
+        <p key={`p-${keyCounter++}`} className="text-xs text-neutral-300 leading-relaxed my-1 font-sans">
+          {parseInline(line)}
+        </p>
+      );
+    }
+  }
+
+  flushList();
+  return elements;
+}
+
 export default function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const projectId = parseInt(id);
@@ -183,7 +284,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
             {errorMsg || "System failed to resolve data nodes. Connection parameters may have timed out."}
           </p>
         </div>
-        <Link href="/dashboard" className="px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-bold uppercase transition hover:bg-primary hover:text-black rounded">
+        <Link href="/dashboard" className="px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-bold uppercase transition hover:bg-primary hover:text-white rounded">
           &lt; BACK TO CONTROL DECK
         </Link>
       </div>
@@ -194,8 +295,8 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
   // Custom Colors matching our system
   const sentimentChartData = [
-    { name: "Positive", value: projectStats.sentimentBreakdown.positive, color: "#00f5d4" }, // Teal
-    { name: "Neutral", value: projectStats.sentimentBreakdown.neutral, color: "#ff9f1c" }, // Copper
+    { name: "Positive", value: projectStats.sentimentBreakdown.positive, color: "#bef264" }, // Volt Green
+    { name: "Neutral", value: projectStats.sentimentBreakdown.neutral, color: "#5865f2" }, // Cyber Indigo
     { name: "Negative", value: projectStats.sentimentBreakdown.negative, color: "#f43f5e" }, // Rose
   ];
 
@@ -427,8 +528,8 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                       <BarChart data={topicChartData}>
                         <XAxis dataKey="name" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
                         <YAxis stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: "rgba(255,255,255,0.02)" }} contentStyle={{ background: '#0f1422', borderColor: '#22283a', fontFamily: 'monospace' }} />
-                        <Bar dataKey="count" fill="#ff9f1c" radius={[2, 2, 0, 0]} />
+                        <Tooltip cursor={{ fill: "rgba(255,255,255,0.02)" }} contentStyle={{ background: '#0f1422', borderColor: '#334155', color: '#f8fafc', fontFamily: 'monospace' }} />
+                        <Bar dataKey="count" fill="#5865f2" radius={[2, 2, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -452,11 +553,11 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                   </span>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-neutral-300 text-xs leading-relaxed space-y-4 font-mono whitespace-pre-wrap">
+                <div className="text-neutral-300 text-xs leading-relaxed space-y-1">
                   {rawReports.length > 0 ? (
-                    rawReports[0].summary
+                    renderMarkdown(rawReports[0].summary)
                   ) : (
-                    <p className="text-muted-foreground italic">Pipeline reports buffer empty.</p>
+                    <p className="text-muted-foreground italic font-mono uppercase tracking-wider">Pipeline reports buffer empty.</p>
                   )}
                 </div>
               </div>
@@ -746,13 +847,13 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
                     {/* Console body panel */}
                     <div
-                      className={`p-4 border text-[11px] leading-relaxed whitespace-pre-wrap rounded ${
+                      className={`p-4 border text-[11px] leading-relaxed rounded ${
                         msg.sender === "user"
                           ? "bg-primary/10 border-primary text-white"
                           : "bg-background border-border text-neutral-200"
                       }`}
                     >
-                      {msg.text}
+                      {renderMarkdown(msg.text)}
                     </div>
 
                     {/* Retrieval logs sources */}

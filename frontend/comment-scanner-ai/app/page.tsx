@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Sparkles, 
-  ArrowRight, 
-  FileSpreadsheet, 
-  MessageSquare, 
-  ShieldAlert, 
-  BarChart3, 
-  Brain, 
+import {
+  Sparkles,
+  ArrowRight,
+  FileSpreadsheet,
+  MessageSquare,
+  ShieldAlert,
+  BarChart3,
+  Brain,
   ChevronRight,
   TrendingUp,
   Cpu,
@@ -193,10 +193,10 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-background overflow-hidden flex flex-col justify-between select-none">
-      
+
       {/* Decorative Matrix Grid Backing */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-      
+
       {/* Dynamic Radar Sweeper Background */}
       <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" />
@@ -223,8 +223,8 @@ export default function Home() {
           <a href="#channels" className="hover:text-white transition">Ingestion Nodes</a>
         </div>
 
-        <Link 
-          href="/dashboard" 
+        <Link
+          href="/dashboard"
           className="relative inline-flex items-center justify-center px-4 py-2 border border-primary/40 bg-primary/10 text-xs font-mono font-bold text-primary hover:bg-primary hover:text-black transition-all duration-300 rounded shadow-md active:scale-95"
         >
           INITIALIZE CONTROL
@@ -235,7 +235,7 @@ export default function Home() {
       {/* Hero Section */}
       <main className="relative flex-grow flex flex-col justify-center max-w-7xl w-full mx-auto px-6 py-10 md:py-20 z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left: The Thesis */}
           <div className="lg:col-span-6 flex flex-col items-start text-left space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-accent/20 bg-accent/5 text-[10px] font-mono tracking-wider font-semibold text-accent uppercase">
@@ -246,7 +246,7 @@ export default function Home() {
             <div className="space-y-4">
               <h1 className="text-4xl sm:text-5xl md:text-[54px] leading-[1.05] font-extrabold text-white tracking-tight font-display">
                 AGGREGATE THE NOISE. <br />
-                <span className="bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   EXTRACT TELEMETRY.
                 </span>
               </h1>
@@ -272,16 +272,16 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 pt-4 w-full">
-              <Link 
-                href="/dashboard" 
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3.5 bg-primary text-black font-mono font-bold text-xs hover:bg-amber-400 transition active:scale-95 rounded"
+              <Link
+                href="/dashboard"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3.5 bg-primary text-white font-mono font-bold text-xs hover:bg-primary/90 transition active:scale-95 rounded"
               >
                 START SCANNING TELEMETRY
                 <ChevronRight className="ml-2 w-4 h-4" />
               </Link>
-              <a 
-                href="#calibrations" 
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3.5 border border-border bg-card hover:bg-card/80 text-white font-mono text-xs transition rounded"
+              <a
+                href="#calibrations"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-6 py-3.5 border border-border bg-card hover:bg-card/85 text-white font-mono text-xs transition rounded"
               >
                 VIEW DIAGNOSTICS
               </a>
@@ -291,7 +291,7 @@ export default function Home() {
           {/* Right: The Signature Laser Scanner Console */}
           <div id="console" className="lg:col-span-6 relative w-full max-w-lg mx-auto">
             <div className="instrument-card instrument-card-glow rounded p-5 flex flex-col justify-between min-h-[460px] crt-grid">
-              
+
               {/* Console Header */}
               <div className="flex items-center justify-between border-b border-border/40 pb-3">
                 <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
@@ -313,11 +313,10 @@ export default function Home() {
                     type="button"
                     onClick={() => handlePresetSelect(idx)}
                     disabled={isScanning}
-                    className={`px-2 py-2 border font-mono text-[9px] uppercase tracking-wider rounded transition cursor-pointer text-center ${
-                      activePreset === idx && !customText
+                    className={`px-2 py-2 border font-mono text-[9px] uppercase tracking-wider rounded transition cursor-pointer text-center ${activePreset === idx && !customText
                         ? "bg-primary/10 border-primary text-primary font-semibold"
                         : "bg-background/40 border-border text-muted-foreground hover:text-white hover:border-muted-foreground/30"
-                    }`}
+                      }`}
                   >
                     {preset.name}
                   </button>
@@ -326,10 +325,10 @@ export default function Home() {
 
               {/* Console Content Screen */}
               <div className="relative flex-grow inset-chassis rounded p-4 font-mono text-xs flex flex-col justify-between min-h-[220px] overflow-hidden">
-                
+
                 {/* Laser Sweep Line */}
                 {isScanning && (
-                  <div 
+                  <div
                     className="absolute left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-sweep pointer-events-none"
                     style={{ zIndex: 10 }}
                   />
@@ -340,7 +339,7 @@ export default function Home() {
                     <span>SOURCE FEED: {customText ? "CUSTOM_SANDBOX" : PRESETS[activePreset].name.toUpperCase().replace(" ", "_")}</span>
                     <span>LENGTH: {customText ? customText.length : PRESETS[activePreset].comment.length} Chars</span>
                   </div>
-                  
+
                   {/* Dynamic Stream Text Display */}
                   <div className="text-neutral-300 leading-relaxed text-[11px] font-mono min-h-[90px] whitespace-pre-wrap">
                     {isScanning ? (
@@ -355,25 +354,24 @@ export default function Home() {
 
                 {/* Real-time Meter Telemetry */}
                 <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-4 text-left font-mono z-10">
-                  
+
                   {/* Sentiment Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-[9px] uppercase text-muted-foreground">
                       <span>SENTIMENT DETECTOR</span>
                       <span className={
-                        scanOutput?.sentiment === "positive" ? "text-accent" : 
-                        scanOutput?.sentiment === "negative" ? "text-primary" : "text-amber-500"
+                        scanOutput?.sentiment === "positive" ? "text-accent" :
+                          scanOutput?.sentiment === "negative" ? "text-rose-400" : "text-amber-400"
                       }>
                         {scanOutput ? `${Math.round(scanOutput.sentimentScore * 100)}% ${scanOutput.sentiment.toUpperCase()}` : "--"}
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-background rounded-full overflow-hidden flex">
                       {scanOutput ? (
-                        <div 
-                          className={`h-full transition-all duration-500 ${
-                            scanOutput.sentiment === "positive" ? "bg-accent" : 
-                            scanOutput.sentiment === "negative" ? "bg-primary" : "bg-amber-500"
-                          }`}
+                        <div
+                          className={`h-full transition-all duration-500 ${scanOutput.sentiment === "positive" ? "bg-accent" :
+                              scanOutput.sentiment === "negative" ? "bg-rose-500" : "bg-amber-500"
+                            }`}
                           style={{ width: `${scanOutput.sentimentScore * 100}%` }}
                         />
                       ) : (
@@ -386,15 +384,15 @@ export default function Home() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-[9px] uppercase text-muted-foreground">
                       <span>TOXICITY FACTOR</span>
-                      <span className={scanOutput && scanOutput.toxicity > 0.4 ? "text-primary font-bold" : "text-accent"}>
+                      <span className={scanOutput && scanOutput.toxicity > 0.4 ? "text-rose-400 font-bold" : "text-accent"}>
                         {scanOutput ? `${Math.round(scanOutput.toxicity * 100)}%` : "--"}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="flex-grow h-1.5 bg-background rounded-full overflow-hidden">
                         {scanOutput ? (
-                          <div 
-                            className={`h-full transition-all duration-500 ${scanOutput.toxicity > 0.4 ? "bg-primary" : "bg-accent"}`}
+                          <div
+                            className={`h-full transition-all duration-500 ${scanOutput.toxicity > 0.4 ? "bg-rose-500" : "bg-accent"}`}
                             style={{ width: `${scanOutput.toxicity * 100}%` }}
                           />
                         ) : (
@@ -409,20 +407,20 @@ export default function Home() {
 
                   {/* Emotion & Category Tag */}
                   <div className="col-span-2 grid grid-cols-2 gap-2 text-[10px]">
-                    <div className="p-2 rounded bg-background/50 border border-white/5">
+                    <div className="p-2 rounded bg-background/50 border border-border">
                       <span className="text-[8px] uppercase text-muted-foreground block">DETECTED AFFECT</span>
                       <span className="text-white font-semibold uppercase font-mono">{scanOutput ? scanOutput.emotion : "--"}</span>
                     </div>
-                    <div className="p-2 rounded bg-background/50 border border-white/5">
+                    <div className="p-2 rounded bg-background/50 border border-border">
                       <span className="text-[8px] uppercase text-muted-foreground block">PIPELINE ROUTE</span>
                       <span className="text-primary font-semibold uppercase font-mono">{scanOutput ? scanOutput.topic : "--"}</span>
                     </div>
                   </div>
 
                   {/* Executive Extraction Compiler */}
-                  <div className="col-span-2 p-2.5 rounded border border-primary/10 bg-primary/5 space-y-0.5">
+                  <div className="col-span-2 p-2.5 rounded border border-primary/30 bg-primary/10 space-y-0.5">
                     <span className="text-[8px] uppercase text-primary font-bold tracking-wider block">COMPILER SUMMARY SUMMARY_EXTRACT.LOG</span>
-                    <p className="text-[10px] text-neutral-300 italic leading-snug">
+                    <p className="text-[10px] text-neutral-200 italic leading-snug">
                       {scanOutput ? `"${scanOutput.summary}"` : "Waiting for scan process to complete..."}
                     </p>
                   </div>
@@ -453,7 +451,7 @@ export default function Home() {
 
             </div>
           </div>
-          
+
         </div>
       </main>
 
@@ -477,7 +475,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
+
           {/* Card 1 */}
           <div className="instrument-card rounded p-6 hover:border-accent/40 transition-all duration-300 group">
             <div className="w-10 h-10 border border-accent/20 bg-accent/5 flex items-center justify-center text-accent rounded mb-5">
