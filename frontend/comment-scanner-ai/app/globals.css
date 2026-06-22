@@ -6,34 +6,41 @@
   --font-display: "Syne", sans-serif;
   --font-mono: "Space Grotesk", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-background: hsl(222, 55%, 5%);     /* Deep Carbon Navy */
+  --color-background: hsl(222, 55%, 5%);
+  /* Deep Carbon Navy */
   --color-foreground: hsl(210, 40%, 98%);
-  
-  --color-card: hsl(222, 45%, 10%);          /* Carbon steel card chassis */
+
+  --color-card: hsl(222, 45%, 10%);
+  /* Carbon steel card chassis */
   --color-card-foreground: hsl(210, 40%, 98%);
-  
+
   --color-popover: hsl(222, 55%, 5%);
   --color-popover-foreground: hsl(210, 40%, 98%);
-  
-  --color-primary: hsl(235, 86%, 65%);       /* Cyber Indigo */
+
+  --color-primary: hsl(235, 86%, 65%);
+  /* Cyber Indigo */
   --color-primary-foreground: hsl(222, 55%, 5%);
-  
-  --color-secondary: hsl(222, 34%, 21%);     /* Steel grey */
+
+  --color-secondary: hsl(222, 34%, 21%);
+  /* Steel grey */
   --color-secondary-foreground: hsl(210, 40%, 98%);
-  
+
   --color-muted: hsl(222, 30%, 14%);
-  --color-muted-foreground: hsl(215, 20%, 68%); /* Highly legible slate grey */
-  
-  --color-accent: hsl(75, 100%, 50%);        /* Neon Volt Green */
+  --color-muted-foreground: hsl(215, 20%, 68%);
+  /* Highly legible slate grey */
+
+  --color-accent: hsl(75, 100%, 50%);
+  /* Neon Volt Green */
   --color-accent-foreground: hsl(222, 55%, 5%);
-  
+
   --color-destructive: hsl(350, 89%, 60%);
   --color-destructive-foreground: hsl(210, 40%, 98%);
-  
-  --color-border: hsl(222, 34%, 21%);        /* Bright, high-contrast borders */
+
+  --color-border: hsl(222, 34%, 21%);
+  /* Bright, high-contrast borders */
   --color-input: hsl(222, 40%, 7%);
   --color-ring: hsl(235, 86%, 65%);
-  
+
   --animate-shimmer: shimmer 2.5s infinite linear;
   --animate-float: float 6s ease-in-out infinite;
   --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -44,31 +51,40 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-6px);
   }
 }
 
 @keyframes scan-sweep {
-  0%, 100% {
+
+  0%,
+  100% {
     top: 2%;
     opacity: 0.1;
   }
+
   10% {
     opacity: 0.8;
   }
+
   95% {
     opacity: 0.8;
   }
+
   98% {
     top: 98%;
     opacity: 0.1;
@@ -83,7 +99,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -93,19 +114,21 @@ h1, h2, h3, h4, h5, h6 {
 .instrument-card {
   background: radial-gradient(120% 120% at 50% 10%, hsl(222, 45%, 11%) 0%, hsl(222, 55%, 6%) 100%);
   border: 1.5px solid var(--color-border);
-  box-shadow: 0 10px 30px -15px rgba(0,0,0,0.8);
+  box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.8);
   position: relative;
 }
 
 .instrument-card-glow {
   background: radial-gradient(120% 120% at 50% 10%, hsl(222, 45%, 12%) 0%, hsl(222, 55%, 7%) 100%);
-  border: 1.5px solid hsla(235, 86%, 65%, 0.35); /* Brightened indigo glow outline */
+  border: 1.5px solid hsla(235, 86%, 65%, 0.35);
+  /* Brightened indigo glow outline */
   box-shadow: 0 0 25px -5px hsla(235, 86%, 65%, 0.12), inset 0 0 12px 0 hsla(235, 86%, 65%, 0.04);
 }
 
 .instrument-card-teal {
   background: radial-gradient(120% 120% at 50% 10%, hsl(222, 45%, 12%) 0%, hsl(222, 55%, 7%) 100%);
-  border: 1.5px solid hsla(75, 100%, 50%, 0.35);  /* Volt green glow outline */
+  border: 1.5px solid hsla(75, 100%, 50%, 0.35);
+  /* Volt green glow outline */
   box-shadow: 0 0 25px -5px hsla(75, 100%, 50%, 0.12), inset 0 0 12px 0 hsla(75, 100%, 50%, 0.04);
 }
 
@@ -118,7 +141,10 @@ h1, h2, h3, h4, h5, h6 {
   content: " ";
   display: block;
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
   z-index: 2;
   background-size: 100% 4px, 6px 100%;
@@ -169,12 +195,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .led-teal {
   background-color: var(--color-accent);
-  box-shadow: 0 0 10px 2px var(--color-accent); /* Volt neon glow */
+  box-shadow: 0 0 10px 2px var(--color-accent);
+  /* Volt neon glow */
 }
 
 .led-copper {
   background-color: var(--color-primary);
-  box-shadow: 0 0 10px 2px var(--color-primary); /* Cyber Indigo glow */
+  box-shadow: 0 0 10px 2px var(--color-primary);
+  /* Cyber Indigo glow */
 }
 
 .led-neutral {
