@@ -1,9 +1,13 @@
 import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/google"; // wait, credentials provider
+import GoogleProvider from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
     Credentials({
       name: "Credentials",
       credentials: {
@@ -30,9 +34,6 @@ export const authOptions = {
     strategy: "jwt" as const,
   },
   secret: process.env.NEXTAUTH_SECRET || "default_auth_secret_key_12345_comment_scanner",
-  pages: {
-    signIn: "/api/auth/signin", // uses next-auth default or customized signin page
-  }
 };
 
 const handler = NextAuth(authOptions);
