@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  FileSpreadsheet, 
-  MessageSquare, 
-  Brain, 
-  Sparkles, 
-  Search, 
+import {
+  ArrowLeft,
+  FileSpreadsheet,
+  MessageSquare,
+  Brain,
+  Sparkles,
+  Search,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
@@ -97,7 +97,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [data, setData] = useState<ProjectData | null>(null);
-  
+
   // Mounted check for Recharts hydration safety
   const [mounted, setMounted] = useState(false);
 
@@ -129,7 +129,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
       }
       const projectData = await res.json();
       setData(projectData);
-      
+
       // Initialize chat with standard system introduction
       setMessages([
         {
@@ -188,8 +188,8 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
   // Filtering Comments
   const filteredComments = rawComments.filter((c) => {
-    const textMatch = c.text.toLowerCase().includes(searchText.toLowerCase()) || 
-                      (c.author && c.author.toLowerCase().includes(searchText.toLowerCase()));
+    const textMatch = c.text.toLowerCase().includes(searchText.toLowerCase()) ||
+      (c.author && c.author.toLowerCase().includes(searchText.toLowerCase()));
     const sentimentMatch = filterSentiment === "all" || c.sentiment === filterSentiment;
     const topicMatch = filterTopic === "all" || c.topic === filterTopic;
     return textMatch && sentimentMatch && topicMatch;
@@ -276,25 +276,22 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
           <div className="flex items-center gap-2 border border-white/5 bg-black/30 p-1.5 rounded-2xl text-xs font-semibold">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
-                activeTab === "overview" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "overview" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab("comments")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
-                activeTab === "comments" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "comments" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                }`}
             >
               Comments ({rawComments.length})
             </button>
             <button
               onClick={() => setActiveTab("chat")}
-              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
-                activeTab === "chat" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "chat" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
+                }`}
             >
               AI Chat
             </button>
@@ -304,7 +301,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
       {/* Detail Workspace */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 z-10">
-        
+
         {/* OVERVIEW TAB */}
         {activeTab === "overview" && (
           <div className="space-y-8 animate-fade-in">
@@ -404,7 +401,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
             {/* In-depth details row */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
+
               {/* Left col: Executive summary report */}
               <div className="lg:col-span-8 p-6 rounded-2xl glass-panel space-y-4">
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -417,7 +414,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                     Report 1.0.0
                   </span>
                 </div>
-                
+
                 <div className="prose prose-invert max-w-none text-neutral-300 text-xs leading-relaxed space-y-4 font-sans whitespace-pre-wrap">
                   {rawReports.length > 0 ? (
                     rawReports[0].summary
@@ -429,7 +426,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
               {/* Right col: Top Complaints & Requests lists */}
               <div className="lg:col-span-4 space-y-6">
-                
+
                 {/* Ranked Complaints */}
                 <div className="p-5 rounded-2xl glass-panel space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
@@ -491,7 +488,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
           <div className="space-y-6 animate-fade-in">
             {/* Filter Bar */}
             <div className="p-4 rounded-2xl glass-panel flex flex-col md:flex-row items-center gap-4">
-              
+
               {/* Search input */}
               <div className="relative flex-grow w-full">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
@@ -548,7 +545,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
               <div className="space-y-4">
                 <div className="space-y-3">
                   {currentComments.map((comment) => (
-                    <div 
+                    <div
                       key={comment.id}
                       className="p-5 rounded-2xl glass-panel hover:bg-white/2 hover:border-white/15 transition-all duration-200 space-y-3 relative overflow-hidden"
                     >
@@ -628,11 +625,10 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                           <button
                             key={page}
                             onClick={() => handlePageChange(page)}
-                            className={`w-7 h-7 rounded-lg border text-xs font-semibold transition ${
-                              currentPage === page
+                            className={`w-7 h-7 rounded-lg border text-xs font-semibold transition ${currentPage === page
                                 ? "bg-primary border-primary text-white"
                                 : "border-white/5 bg-black/20 text-neutral-400 hover:text-white hover:bg-white/5"
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -697,15 +693,14 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
             {/* Chat Box */}
             <div className="lg:col-span-3 rounded-2xl glass-panel flex flex-col h-full overflow-hidden border border-white/5">
-              
+
               {/* Messages viewport */}
               <div className="flex-grow p-6 overflow-y-auto space-y-4 flex flex-col scroll-smooth">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex flex-col max-w-[85%] space-y-1.5 ${
-                      msg.sender === "user" ? "self-end items-end" : "self-start items-start"
-                    }`}
+                    className={`flex flex-col max-w-[85%] space-y-1.5 ${msg.sender === "user" ? "self-end items-end" : "self-start items-start"
+                      }`}
                   >
                     {/* Header */}
                     <div className="flex items-center gap-1.5 text-[9px] font-bold text-neutral-500 uppercase tracking-wider">
@@ -714,11 +709,10 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
                     {/* Content Box */}
                     <div
-                      className={`p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
-                        msg.sender === "user"
+                      className={`p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${msg.sender === "user"
                           ? "bg-primary text-white rounded-tr-none"
                           : "bg-white/5 border border-white/10 text-neutral-200 rounded-tl-none"
-                      }`}
+                        }`}
                     >
                       {msg.text}
                     </div>
@@ -728,8 +722,8 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                       <div className="w-full text-left space-y-1 pl-1">
                         <span className="text-[9px] uppercase font-bold text-neutral-600 block">retrieved sources:</span>
                         {msg.sources.map((src, sIdx) => (
-                          <span 
-                            key={sIdx} 
+                          <span
+                            key={sIdx}
                             className="block p-1.5 rounded bg-black/30 border border-white/5 text-[10px] text-neutral-500 line-clamp-1 italic font-sans"
                             title={src}
                           >
