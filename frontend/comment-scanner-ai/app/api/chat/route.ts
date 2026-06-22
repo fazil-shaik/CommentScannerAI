@@ -1,15 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { comments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { comments, projects } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getOrCreateUserId } from "@/db/user";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = await getOrCreateUserId(session.user.email, session.user.name);
     const body = await req.json();
     const { projectId, question } = body;
 
     if (!projectId || !question) {
       return NextResponse.json({ error: "projectId and question are required fields." }, { status: 400 });
+    }
+
+    // Verify project belongs to user
+    const projectList = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+    if (projectList.length === 0) {
+      return NextResponse.json({ error: "Project not found or unauthorized." }, { status: 404 });
     }
 
     // 1. Fetch comments for this project
@@ -51,7 +70,6 @@ export async function POST(req: NextRequest) {
       console.error("Error communicating with AI Chat microservice:", e);
     }
 
-    // Fallback: local direct answer in typescript if microservice is down
     return NextResponse.json({
       answer: "The AI analysis server is currently unreachable. Please check if the FastAPI backend is running.",
     });

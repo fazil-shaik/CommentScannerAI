@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { comments, reports, projects } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getOrCreateUserId } from "@/db/user";
 
 // Pre-curated high-fidelity mock comments for YouTube and Reddit imports
 const YOUTUBE_MOCK_COMMENTS = [
@@ -101,6 +104,12 @@ function parseCSV(csvText: string): string[] {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = await getOrCreateUserId(session.user.email, session.user.name);
     const body = await req.json();
     const { projectId, sourceType, data } = body;
 
@@ -108,10 +117,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "projectId, sourceType, and data are required." }, { status: 400 });
     }
 
-    // Verify project exists
-    const proj = await db.select().from(projects).where(eq(projects.id, projectId));
+    // Verify project exists and belongs to the user
+    const proj = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
     if (proj.length === 0) {
-      return NextResponse.json({ error: "Project not found." }, { status: 404 });
+      return NextResponse.json({ error: "Project not found or unauthorized." }, { status: 404 });
     }
     const currentProject = proj[0];
 

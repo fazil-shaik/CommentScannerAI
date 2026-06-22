@@ -1,8 +1,16 @@
 import { pgTable, serial, text, varchar, timestamp, doublePrecision, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   sourceType: varchar("source_type", { length: 50 }).notNull(), // youtube, reddit, csv, manual
   description: text("description"),
@@ -38,7 +46,15 @@ export const reports = pgTable("reports", {
 });
 
 // Relationships
-export const projectsRelations = relations(projects, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  projects: many(projects),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
+  }),
   comments: many(comments),
   reports: many(reports),
 }));

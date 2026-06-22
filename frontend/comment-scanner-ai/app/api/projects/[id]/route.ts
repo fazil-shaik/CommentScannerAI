@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { projects, comments, reports } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getOrCreateUserId } from "@/db/user";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const projectId = parseInt(id);
 
@@ -12,15 +20,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    // 1. Fetch project
-    const projectList = await db.select().from(projects).where(eq(projects.id, projectId));
+    const userId = await getOrCreateUserId(session.user.email, session.user.name);
+
+    // 1. Fetch project and verify ownership
+    const projectList = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
     if (projectList.length === 0) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
     const project = projectList[0];
 
     // 2. Fetch comments
-    const projectComments = await db.select().from(comments).where(eq(comments.projectId, projectId));
+    const projectComments: any[] = await db.select().from(comments).where(eq(comments.projectId, projectId));
 
     // 3. Fetch reports
     const projectReports = await db.select().from(reports).where(eq(reports.projectId, projectId));
@@ -50,23 +64,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       neutral: 0,
     };
 
-    projectComments.forEach((c: { sentiment: string; toxicity: number | null; topic: string; emotion: string; }) => {
-      // Sentiment
+    projectComments.forEach((c) => {
       if (c.sentiment === "positive") positiveCount++;
       else if (c.sentiment === "negative") negativeCount++;
       else neutralCount++;
 
-      // Toxicity
       if (c.toxicity !== null) totalToxicity += c.toxicity;
 
-      // Topic
       if (c.topic && c.topic in topicCounts) {
         topicCounts[c.topic]++;
       } else if (c.topic) {
         topicCounts.other++;
       }
 
-      // Emotion
       if (c.emotion && c.emotion in emotionCounts) {
         emotionCounts[c.emotion]++;
       } else if (c.emotion) {
@@ -76,11 +86,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const averageToxicity = totalComments > 0 ? totalToxicity / totalComments : 0;
 
-    // Compile Top Complaints and Top Feature Requests from raw comments
     const topComplaints = projectComments
-      .filter((c: { sentiment: string; topic: string; }) => c.sentiment === "negative" && (c.topic === "bugs" || c.topic === "performance" || c.topic === "pricing"))
+      .filter((c) => c.sentiment === "negative" && (c.topic === "bugs" || c.topic === "performance" || c.topic === "pricing"))
       .slice(0, 5)
-      .map((c: { id: any; text: any; topic: any; sentiment: any; }) => ({
+      .map((c) => ({
         id: c.id,
         text: c.text,
         topic: c.topic,
@@ -88,9 +97,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       }));
 
     const topFeatureRequests = projectComments
-      .filter((c: { topic: string; }) => c.topic === "features")
+      .filter((c) => c.topic === "features")
       .slice(0, 5)
-      .map((c: { id: any; text: any; topic: any; sentiment: any; }) => ({
+      .map((c) => ({
         id: c.id,
         text: c.text,
         topic: c.topic,
@@ -123,6 +132,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const projectId = parseInt(id);
 
@@ -130,11 +144,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    const deleteResult = await db.delete(projects).where(eq(projects.id, projectId)).returning();
+    const userId = await getOrCreateUserId(session.user.email, session.user.name);
 
-    if (deleteResult.length === 0) {
-      return NextResponse.json({ error: "Project not found or already deleted" }, { status: 404 });
+    // Verify ownership before deleting
+    const projectList = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.userId, userId)));
+
+    if (projectList.length === 0) {
+      return NextResponse.json({ error: "Project not found or unauthorized" }, { status: 404 });
     }
+
+    const deleteResult = await db.delete(projects).where(eq(projects.id, projectId)).returning();
 
     return NextResponse.json({ message: "Project deleted successfully", deletedProject: deleteResult[0] });
   } catch (error: any) {

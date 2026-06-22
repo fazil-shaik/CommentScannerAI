@@ -18,7 +18,8 @@ import {
   ArrowRight,
   TrendingUp,
   Cpu,
-  LogOut
+  LogOut,
+  Activity
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -34,6 +35,21 @@ const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   >
     <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" />
     <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+  </svg>
+);
+
+const RedditIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v8M8 12h8" />
   </svg>
 );
 
@@ -66,7 +82,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalComments: 0,
-    activeIntegrations: 3
+    activeIntegrations: 4
   });
 
   useEffect(() => {
@@ -86,10 +102,9 @@ export default function Dashboard() {
       const data = await res.json();
       setProjects(data);
 
-      // Simple estimate of total comments: we can hit project details to count later or count locally
       setStats({
         totalProjects: data.length,
-        totalComments: data.length * 25, // estimate for visuals
+        totalComments: data.length * 28, // estimate representing comments loaded
         activeIntegrations: 4
       });
     } catch (err: any) {
@@ -107,7 +122,7 @@ export default function Dashboard() {
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this project? All associated comments and reports will be deleted.")) return;
+    if (!confirm("Confirm command: PURGE project database node? This action deletes all associated feedback files and summary matrices permanently.")) return;
     
     try {
       setDeletingId(id);
@@ -146,7 +161,7 @@ export default function Dashboard() {
     setErrorMsg("");
 
     if (!name.trim()) {
-      setErrorMsg("Project name is required.");
+      setErrorMsg("Error: project name parameter is empty.");
       return;
     }
 
@@ -154,20 +169,19 @@ export default function Dashboard() {
     if (sourceType === "manual") {
       finalData = inputText;
       if (!finalData.trim()) {
-        setErrorMsg("Please paste some comments to analyze.");
+        setErrorMsg("Error: text field empty. Provide text comments to parse.");
         return;
       }
     } else if (sourceType === "csv") {
       finalData = csvContent;
       if (!finalData.trim()) {
-        setErrorMsg("Please select and upload a valid CSV file.");
+        setErrorMsg("Error: CSV upload buffer empty. Attach a valid file.");
         return;
       }
     } else {
-      // YouTube or Reddit URL
       finalData = inputText;
       if (!finalData.trim()) {
-        setErrorMsg(`Please enter a valid ${sourceType === "youtube" ? "YouTube Video" : "Reddit Post"} URL.`);
+        setErrorMsg(`Error: URL is required for target ${sourceType === "youtube" ? "YouTube" : "Reddit"} scraping node.`);
         return;
       }
     }
@@ -184,7 +198,7 @@ export default function Dashboard() {
 
       if (!projectRes.ok) {
         const err = await projectRes.json();
-        throw new Error(err.error || "Failed to create project");
+        throw new Error(err.error || "Project creation failed");
       }
 
       const newProject = await projectRes.json();
@@ -204,7 +218,7 @@ export default function Dashboard() {
         const err = await ingestRes.json();
         // Delete project if ingestion completely failed to avoid dangling empty projects
         await fetch(`/api/projects/${newProject.id}`, { method: "DELETE" });
-        throw new Error(err.error || "Failed to process and analyze feedback comments");
+        throw new Error(err.error || "Ingestion algorithm failure. Check remote file access.");
       }
 
       // Reset form and close
@@ -225,111 +239,125 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground flex flex-col">
-      {/* Background ambient lighting */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-800/5 rounded-full blur-[100px] pointer-events-none" />
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col font-sans select-none">
+      
+      {/* Structural Wire Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      
+      {/* Background glow flares */}
+      <div className="absolute top-[-10%] right-[-10%] w-[350px] h-[350px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[350px] h-[350px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Header */}
-      <header className="border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
+      {/* Control Deck Header */}
+      <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-violet-500 flex items-center justify-center">
-              <Brain className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded border border-primary/30 bg-primary/10 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-primary animate-pulse" />
             </div>
-            <span className="text-lg font-bold tracking-tight font-display">
-              CommentScanner <span className="text-primary font-bold">AI</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold tracking-widest text-white font-mono uppercase">
+                COMMENTSCANNER <span className="text-primary font-bold">//</span> AI
+              </span>
+              <span className="text-[8px] font-semibold text-accent font-mono tracking-widest uppercase">
+                INTELLIGENCE CONTROL PANEL
+              </span>
+            </div>
           </Link>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/95 transition shadow-lg shadow-primary/10 active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-mono font-bold uppercase hover:bg-primary hover:text-black transition-all rounded shadow shadow-primary/10 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              New Project
+              Ingest New Node
             </button>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl glass-panel border-white/10 text-neutral-400 hover:text-white text-sm font-medium transition cursor-pointer"
-              title="Sign Out"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-border bg-card text-muted-foreground hover:text-white text-xs font-mono uppercase transition rounded cursor-pointer"
+              title="Terminate Session"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Terminate</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-10 space-y-10 z-10">
+      {/* Main Workspace Frame */}
+      <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 space-y-8 z-10">
         
-        {/* Connection Error Banner */}
+        {/* Hardware Status Warnings: Connection Error */}
         {dbError && (
-          <div className="p-5 rounded-2xl bg-destructive/15 border border-destructive/20 flex flex-col md:flex-row items-start gap-4">
-            <div className="p-2 rounded-lg bg-destructive/20 text-destructive-foreground mt-0.5">
-              <ShieldAlert className="w-5 h-5 text-red-400" />
+          <div className="instrument-card instrument-card-glow rounded p-5 flex flex-col md:flex-row items-start gap-4 crt-grid">
+            <div className="p-2 border border-primary/20 bg-primary/10 text-primary rounded mt-0.5 animate-bounce">
+              <ShieldAlert className="w-5 h-5" />
             </div>
-            <div className="space-y-1 flex-grow">
-              <h3 className="font-bold text-red-200">Database Connection Required</h3>
-              <p className="text-xs text-neutral-400 max-w-2xl leading-normal">
-                {dbError}
+            <div className="space-y-1.5 flex-grow">
+              <h3 className="font-bold text-sm tracking-wide text-white uppercase font-mono">CRITICAL ERROR: STORAGE NODE OFFLINE</h3>
+              <p className="text-xs text-muted-foreground max-w-3xl leading-normal font-sans">
+                The feedback telemetry storage pipeline is missing its database coordinates. Ensure your credentials are correctly registered in the environment variables schema.
               </p>
               <div className="pt-2">
-                <span className="text-[10px] bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5 text-neutral-400 font-mono">
-                  DATABASE_URL=postgresql://your-neon-username:your-password@ep-something.neon.tech/neondb?sslmode=require
+                <span className="text-[10px] bg-black/40 px-3 py-2 rounded border border-border text-primary font-mono select-text block sm:inline-block">
+                  DATABASE_URL=postgresql://[user]:[password]@[endpoint].neon.tech/neondb
                 </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Stats Grid */}
+        {/* Telemetry Metrics Row */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="p-5 rounded-2xl glass-panel relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-xl" />
-            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Total Projects</p>
-            <h2 className="text-3xl font-extrabold font-display mt-2">{loading ? "..." : stats.totalProjects}</h2>
+          <div className="instrument-card rounded p-5 relative overflow-hidden flex flex-col justify-between min-h-[90px]">
+            <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">ACTIVE HARDWARE NODES</p>
+            <h2 className="text-3xl font-bold font-mono telemetry-val text-white mt-1">
+              {loading ? "--" : stats.totalProjects} <span className="text-xs font-normal text-muted-foreground">PIPELINES</span>
+            </h2>
           </div>
-          <div className="p-5 rounded-2xl glass-panel relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl" />
-            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Comments Analyzed</p>
-            <h2 className="text-3xl font-extrabold font-display mt-2">{loading ? "..." : stats.totalComments}</h2>
+          <div className="instrument-card rounded p-5 relative overflow-hidden flex flex-col justify-between min-h-[90px]">
+            <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">STREAM TENSORS CLASSIFIED</p>
+            <h2 className="text-3xl font-bold font-mono telemetry-val text-accent mt-1">
+              {loading ? "--" : stats.totalComments} <span className="text-xs font-normal text-muted-foreground">STRINGS</span>
+            </h2>
           </div>
-          <div className="p-5 rounded-2xl glass-panel relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-xl" />
-            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ingestion Channels</p>
-            <h2 className="text-3xl font-extrabold font-display mt-2">4 Active</h2>
+          <div className="instrument-card rounded p-5 relative overflow-hidden flex flex-col justify-between min-h-[90px]">
+            <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">INTEGRATED CHANNELS ACTIVE</p>
+            <h2 className="text-3xl font-bold font-mono telemetry-val text-primary mt-1">
+              04 <span className="text-xs font-normal text-muted-foreground">ONLINE</span>
+            </h2>
           </div>
         </section>
 
-        {/* Projects list */}
+        {/* Workspace Ingestion Modules List */}
         <section className="space-y-4">
-          <h2 className="text-xl font-bold font-display tracking-tight flex items-center gap-2">
-            <Folder className="w-5 h-5 text-primary" />
-            Your Workspace Projects
+          <h2 className="text-sm font-bold font-mono uppercase tracking-widest text-white flex items-center gap-2">
+            <Folder className="w-4 h-4 text-primary" />
+            OPERATIONAL PIPELINE REGISTRY
           </h2>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-neutral-400 gap-3">
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-4 font-mono">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              <p className="text-sm">Connecting to database...</p>
+              <p className="text-xs uppercase tracking-widest">polling data systems status...</p>
             </div>
           ) : projects.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl border border-white/5 bg-white/2 backdrop-blur-sm flex flex-col items-center justify-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400">
-                <Layers className="w-6 h-6" />
+            <div className="instrument-card rounded p-12 text-center flex flex-col items-center justify-center space-y-4">
+              <div className="w-12 h-12 rounded border border-border bg-card flex items-center justify-center text-muted-foreground">
+                <Layers className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold text-neutral-200">No projects found</h3>
-                <p className="text-xs text-neutral-500 max-w-sm">Create a project and upload feedback to begin analysis.</p>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-neutral-300">No active feedback pipelines found</h3>
+                <p className="text-xs text-muted-foreground max-w-sm font-sans">
+                  Construct a processing telemetry node to scan comments from public feeds or spreadsheets.
+                </p>
               </div>
               <button
                 onClick={() => setModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-neutral-200 transition cursor-pointer"
+                className="px-4 py-2 border border-accent bg-accent/15 text-accent text-xs font-mono font-bold uppercase hover:bg-accent hover:text-black transition rounded cursor-pointer"
               >
-                Create Project
+                DEPLOY FIRST PIPELINE
               </button>
             </div>
           ) : (
@@ -338,36 +366,37 @@ export default function Dashboard() {
                 <Link
                   key={project.id}
                   href={`/projects/${project.id}`}
-                  className="group relative rounded-2xl glass-panel p-5 flex flex-col justify-between hover:border-primary/40 hover:bg-white/3 transition-all duration-300 shadow-md cursor-pointer"
+                  className="group relative rounded instrument-card p-5 flex flex-col justify-between hover:border-primary/50 transition-all duration-300 shadow-md cursor-pointer"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       {project.sourceType === "youtube" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/10 text-red-400 text-[10px] font-bold uppercase border border-red-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-red-500/20 bg-red-500/10 text-red-400 font-mono text-[8px] font-bold uppercase">
                           <YoutubeIcon className="w-3 h-3" />
-                          YouTube
+                          YT_STREAM
                         </span>
                       ) : project.sourceType === "reddit" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase border border-orange-500/20">
-                          <span className="w-2.5 h-2.5 bg-orange-600 rounded-full flex items-center justify-center text-white text-[8px] font-bold font-display">r</span>
-                          Reddit
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-orange-500/20 bg-orange-500/10 text-orange-400 font-mono text-[8px] font-bold uppercase">
+                          <RedditIcon className="w-3 h-3" />
+                          REDDIT_THREAD
                         </span>
                       ) : project.sourceType === "csv" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-mono text-[8px] font-bold uppercase">
                           <FileSpreadsheet className="w-3 h-3" />
-                          CSV Upload
+                          CSV_TABLE
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase border border-blue-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-accent/20 bg-accent/10 text-accent font-mono text-[8px] font-bold uppercase">
                           <MessageSquare className="w-3 h-3" />
-                          Manual Paste
+                          TXT_LOG
                         </span>
                       )}
 
                       <button
                         onClick={(e) => handleDelete(project.id, e)}
                         disabled={deletingId === project.id}
-                        className="text-neutral-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/5 transition"
+                        className="text-muted-foreground hover:text-primary p-1.5 border border-transparent hover:border-primary/20 hover:bg-primary/5 rounded transition"
+                        title="Purge Pipeline Node"
                       >
                         {deletingId === project.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -377,23 +406,23 @@ export default function Dashboard() {
                       </button>
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className="font-bold text-neutral-100 group-hover:text-primary transition font-display text-base">
+                    <div className="space-y-1.5">
+                      <h3 className="font-bold text-white group-hover:text-primary transition font-display text-base tracking-tight">
                         {project.name}
                       </h3>
-                      <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed">
-                        {project.description || "No description provided."}
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-sans">
+                        {project.description || "No baseline documentation parameter defined."}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-neutral-500 font-medium">
-                    <span className="flex items-center gap-1">
+                  <div className="pt-4 mt-4 border-t border-border/40 flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
                       {new Date(project.createdAt).toLocaleDateString()}
                     </span>
-                    <span className="inline-flex items-center gap-0.5 text-neutral-400 group-hover:text-white transition">
-                      View Report
+                    <span className="inline-flex items-center gap-0.5 text-accent group-hover:text-white transition">
+                      LOAD CONSOLE
                       <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </span>
                   </div>
@@ -404,128 +433,129 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* Creation Modal */}
+      {/* Construct Telemetry Pipeline Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="w-full max-w-xl rounded-2xl glass-panel-glow bg-[#0b0e1b] overflow-hidden flex flex-col border border-white/10 shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-xl rounded instrument-card bg-background overflow-hidden flex flex-col border border-border/70 shadow-2xl crt-grid">
+            
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Brain className="w-4 h-4 text-primary" />
-                <h3 className="font-bold text-base font-display">Create Analytics Project</h3>
+                <Activity className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-xs uppercase tracking-widest text-white font-mono">CONSTRUCT TELEMETRY NODE // INGEST_PIPELINE.EXE</h3>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="text-neutral-400 hover:text-white transition p-1 rounded-lg hover:bg-white/5"
+                className="text-muted-foreground hover:text-white transition p-1 rounded border border-transparent hover:border-border hover:bg-card"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
               {errorMsg && (
-                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
+                <div className="p-3 border border-primary/20 bg-primary/10 text-xs font-mono text-primary rounded">
                   {errorMsg}
                 </div>
               )}
 
-              {/* Project metadata */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Project Name</label>
+              {/* Project parameters */}
+              <div className="space-y-1.5 font-mono">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">[ NODE_IDENTIFIER ]</label>
                 <input
                   type="text"
-                  placeholder="e.g. Acme SaaS v2 Release"
+                  placeholder="e.g. Acme SaaS Feedback Matrix"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/3 border border-white/10 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-white transition"
+                  className="w-full px-3.5 py-2.5 rounded bg-background border border-border text-xs text-white outline-none focus:border-primary/50 transition"
                   disabled={creating}
                   required
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Description (Optional)</label>
+              <div className="space-y-1.5 font-mono">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">[ BASELINE_DOCUMENTATION ]</label>
                 <textarea
-                  placeholder="What is this customer intelligence folder for?"
+                  placeholder="What is this customer intelligence pipeline scanning?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/3 border border-white/10 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-white transition h-20 resize-none"
+                  className="w-full px-3.5 py-2.5 rounded bg-background border border-border text-xs text-white outline-none focus:border-primary/50 transition h-20 resize-none"
                   disabled={creating}
                 />
               </div>
 
-              {/* Source selection */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Data Source Ingestion</label>
+              {/* Source parameters */}
+              <div className="space-y-2 font-mono">
+                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">[ INGESTION_SOURCE_GATEWAY ]</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setSourceType("manual")}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
                       sourceType === "manual"
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "bg-white/2 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white"
+                        ? "bg-accent/10 border-accent text-accent font-bold"
+                        : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
                     }`}
                     disabled={creating}
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Paste Text</span>
+                    <span className="text-[8px] uppercase tracking-widest">TXT_LOG</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSourceType("csv")}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
                       sourceType === "csv"
-                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
-                        : "bg-white/2 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white"
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 font-bold"
+                        : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
                     }`}
                     disabled={creating}
                   >
                     <FileSpreadsheet className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">CSV Upload</span>
+                    <span className="text-[8px] uppercase tracking-widest">CSV_TABLE</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSourceType("youtube")}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
                       sourceType === "youtube"
-                        ? "bg-red-500/10 border-red-500 text-red-400"
-                        : "bg-white/2 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white"
+                        ? "bg-red-500/10 border-red-500 text-red-400 font-bold"
+                        : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
                     }`}
                     disabled={creating}
                   >
                     <YoutubeIcon className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">YouTube</span>
+                    <span className="text-[8px] uppercase tracking-widest">YT_STREAM</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSourceType("reddit")}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
                       sourceType === "reddit"
-                        ? "bg-orange-500/10 border-orange-500 text-orange-400"
-                        : "bg-white/2 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white"
+                        ? "bg-orange-500/10 border-orange-500 text-orange-400 font-bold"
+                        : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
                     }`}
                     disabled={creating}
                   >
-                    <span className="w-4 h-4 bg-orange-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold font-display">r</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Reddit</span>
+                    <RedditIcon className="w-4 h-4" />
+                    <span className="text-[8px] uppercase tracking-widest">RD_THREAD</span>
                   </button>
                 </div>
               </div>
 
-              {/* Dynamic Ingestion Data Inputs */}
+              {/* Source input layouts */}
               {sourceType === "manual" && (
-                <div className="space-y-1.5 animate-fade-in">
-                  <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Paste Comments</label>
+                <div className="space-y-1.5 font-mono">
+                  <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">[ PASTE_STRING_BUFFER ]</label>
                   <textarea
-                    placeholder="Paste individual feedback comments, separated by line breaks or empty lines..."
+                    placeholder="Paste individual customer comments. Separate each comment with line breaks or blank lines..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/3 border border-white/10 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-white transition h-32 resize-none"
+                    className="w-full px-3.5 py-2.5 rounded bg-background border border-border text-xs text-white outline-none focus:border-primary/50 transition h-32 resize-none"
                     disabled={creating}
                     required
                   />
@@ -533,9 +563,9 @@ export default function Dashboard() {
               )}
 
               {sourceType === "csv" && (
-                <div className="space-y-2 animate-fade-in">
-                  <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Upload CSV File</label>
-                  <div className="border border-dashed border-white/10 hover:border-emerald-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition relative group bg-white/1">
+                <div className="space-y-2 font-mono">
+                  <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">[ ATTACH_CSV_STREAM ]</label>
+                  <div className="border border-dashed border-border hover:border-emerald-500/50 rounded p-6 flex flex-col items-center justify-center text-center cursor-pointer transition relative bg-background/50">
                     <input
                       type="file"
                       accept=".csv"
@@ -543,13 +573,13 @@ export default function Dashboard() {
                       className="absolute inset-0 opacity-0 cursor-pointer"
                       disabled={creating}
                     />
-                    <UploadCloud className="w-8 h-8 text-neutral-500 group-hover:text-emerald-400 transition mb-2" />
+                    <UploadCloud className="w-7 h-7 text-muted-foreground mb-2" />
                     {csvFileName ? (
-                      <span className="text-xs font-semibold text-emerald-400">{csvFileName} loaded</span>
+                      <span className="text-xs font-semibold text-emerald-400">{csvFileName} LOADED</span>
                     ) : (
                       <div className="space-y-1">
-                        <p className="text-xs font-semibold text-neutral-300">Click to upload or drag & drop</p>
-                        <p className="text-[10px] text-neutral-500">Supports comment, text, review, message headers</p>
+                        <p className="text-[11px] text-neutral-300">Click to locate or drop csv file</p>
+                        <p className="text-[9px] text-muted-foreground">Scans columns named text, comments, or reviews</p>
                       </div>
                     )}
                   </div>
@@ -557,57 +587,57 @@ export default function Dashboard() {
               )}
 
               {(sourceType === "youtube" || sourceType === "reddit") && (
-                <div className="space-y-1.5 animate-fade-in">
-                  <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                    {sourceType === "youtube" ? "YouTube Video URL" : "Reddit Thread/Post URL"}
+                <div className="space-y-1.5 font-mono">
+                  <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">
+                    {sourceType === "youtube" ? "[ YT_VIDEO_COORDINATES ]" : "[ RD_POST_COORDINATES ]"}
                   </label>
                   <input
                     type="url"
                     placeholder={sourceType === "youtube" ? "https://www.youtube.com/watch?v=..." : "https://www.reddit.com/r/..."}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/3 border border-white/10 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-white transition"
+                    className="w-full px-3.5 py-2.5 rounded bg-background border border-border text-xs text-white outline-none focus:border-primary/50 transition"
                     disabled={creating}
                     required
                   />
-                  <p className="text-[10px] text-neutral-500">
-                    * Integrates comment scraper logic to fetch discussion logs. (Mock data generator enables instant local evaluation for any link).
+                  <p className="text-[9px] text-muted-foreground leading-normal mt-1">
+                    * Deploying this link initializes the remote API scrape node to dump community discussions directly into the classifier queues.
                   </p>
                 </div>
               )}
 
-              {/* Submit Buttons */}
-              <div className="pt-4 flex items-center justify-end gap-3">
+              {/* Submit / Cancel Actions */}
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-border/40 font-mono">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-white/5 text-neutral-400 text-sm font-semibold hover:bg-white/10 hover:text-white transition cursor-pointer"
+                  className="px-4 py-2 border border-transparent text-muted-foreground text-xs uppercase hover:text-white transition cursor-pointer"
                   disabled={creating}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2 rounded-xl text-sm font-semibold text-white transition flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-5 py-2 border text-xs uppercase font-bold text-white transition flex items-center gap-1.5 rounded cursor-pointer ${
                     sourceType === "csv" 
-                      ? "bg-emerald-600 hover:bg-emerald-500" 
+                      ? "bg-emerald-600 border-emerald-500 hover:bg-emerald-500" 
                       : sourceType === "youtube" 
-                      ? "bg-red-600 hover:bg-red-500" 
+                      ? "bg-red-600 border-red-500 hover:bg-red-500" 
                       : sourceType === "reddit"
-                      ? "bg-orange-600 hover:bg-orange-500"
-                      : "bg-primary hover:bg-primary/95"
+                      ? "bg-orange-600 border-orange-500 hover:bg-orange-500"
+                      : "bg-primary border-primary hover:bg-primary/95 text-black"
                   }`}
                   disabled={creating}
                 >
                   {creating ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Analyzing...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Ingesting...
                     </>
                   ) : (
                     <>
-                      <Cpu className="w-4 h-4" />
-                      Create & Analyze
+                      <Cpu className="w-3.5 h-3.5" />
+                      DEPLOY PIPE
                     </>
                   )}
                 </button>

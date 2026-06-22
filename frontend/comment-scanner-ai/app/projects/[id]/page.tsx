@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   FileSpreadsheet,
   MessageSquare,
-  Brain,
   Sparkles,
   Search,
   SlidersHorizontal,
@@ -24,9 +23,13 @@ import {
   Clock,
   TrendingUp,
   AlertTriangle,
-  LogOut
+  LogOut,
+  Activity,
+  Terminal,
+  Cpu
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 
 const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -42,7 +45,21 @@ const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
   </svg>
 );
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+
+const RedditIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v8M8 12h8" />
+  </svg>
+);
 
 interface Comment {
   id: number;
@@ -132,11 +149,11 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
       const projectData = await res.json();
       setData(projectData);
 
-      // Initialize chat with standard system introduction
       setMessages([
         {
           sender: "ai",
-          text: `Hi! I'm your feedback assistant for **${projectData.project.name}**. I've analyzed all ${projectData.stats.totalComments} comments. You can ask me questions like:\n\n* "What features should we build next?"\n* "What are the main bugs or complaints?"\n* "Why are users leaving positive feedback?"`,
+          text: `Neural feedback buffer initialized for pipeline: **${projectData.project.name}**.\nIngested nodes: ${projectData.stats.totalComments} comments.\n\nYou can query this dataset dynamically. Try querying:
+          \n* "List the top 3 user bug reports or technical issues."\n* "What features are requested most by the community?"\n* "Detail the overall sentiment feedback summary."`,
         }
       ]);
     } catch (err: any) {
@@ -149,21 +166,25 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-neutral-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-4 font-mono select-none">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm font-semibold">Running ML analysis summaries...</p>
+        <p className="text-xs uppercase tracking-widest">Compiling classifier parameters...</p>
       </div>
     );
   }
 
   if (errorMsg || !data) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <AlertTriangle className="w-12 h-12 text-rose-500 animate-bounce" />
-        <h2 className="text-2xl font-bold font-display">Oops! Failed to load project</h2>
-        <p className="text-sm text-neutral-400 max-w-md">{errorMsg || "We couldn't retrieve the project details."}</p>
-        <Link href="/dashboard" className="px-4 py-2 bg-primary rounded-xl text-xs font-bold text-white transition hover:bg-primary/90">
-          Go Back Dashboard
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-6 font-mono select-none">
+        <AlertTriangle className="w-12 h-12 text-primary animate-bounce" />
+        <div className="space-y-2">
+          <h2 className="text-lg font-bold text-white uppercase tracking-wider">PIPELINE NODE ERROR</h2>
+          <p className="text-xs text-muted-foreground max-w-md font-sans leading-relaxed">
+            {errorMsg || "System failed to resolve data nodes. Connection parameters may have timed out."}
+          </p>
+        </div>
+        <Link href="/dashboard" className="px-4 py-2 border border-primary bg-primary/10 text-primary text-xs font-bold uppercase transition hover:bg-primary hover:text-black rounded">
+          &lt; BACK TO CONTROL DECK
         </Link>
       </div>
     );
@@ -171,20 +192,15 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
   const { project, comments: rawComments, reports: rawReports, stats: projectStats } = data;
 
-  // Recharts Data Prep
+  // Custom Colors matching our system
   const sentimentChartData = [
-    { name: "Positive", value: projectStats.sentimentBreakdown.positive, color: "#10b981" },
-    { name: "Neutral", value: projectStats.sentimentBreakdown.neutral, color: "#eab308" },
-    { name: "Negative", value: projectStats.sentimentBreakdown.negative, color: "#f43f5e" },
+    { name: "Positive", value: projectStats.sentimentBreakdown.positive, color: "#00f5d4" }, // Teal
+    { name: "Neutral", value: projectStats.sentimentBreakdown.neutral, color: "#ff9f1c" }, // Copper
+    { name: "Negative", value: projectStats.sentimentBreakdown.negative, color: "#f43f5e" }, // Rose
   ];
 
   const topicChartData = Object.entries(projectStats.topicDistribution).map(([topic, count]) => ({
     name: topic.charAt(0).toUpperCase() + topic.slice(1),
-    count: count,
-  }));
-
-  const emotionChartData = Object.entries(projectStats.emotionDistribution).map(([emotion, count]) => ({
-    name: emotion.charAt(0).toUpperCase() + emotion.slice(1),
     count: count,
   }));
 
@@ -245,7 +261,7 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
-        { sender: "ai", text: "Sorry, I had trouble parsing that. Please make sure the backend is active." },
+        { sender: "ai", text: "ERROR: RAG neural interface offline. Ensure backend server processes are responding on port 8000." },
       ]);
     } finally {
       setChatLoading(false);
@@ -253,48 +269,50 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Background ambient lighting */}
-      <div className="absolute top-[-10%] left-[-10%] w-[35%] h-[35%] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-violet-800/5 rounded-full blur-[100px] pointer-events-none" />
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col font-sans select-none">
+      
+      {/* Structural Wire Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[350px] h-[350px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Header */}
-      <header className="border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
+      {/* Detail Header */}
+      <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-neutral-400 hover:text-white p-2 rounded-xl hover:bg-white/5 transition">
-              <ArrowLeft className="w-5 h-5" />
+            <Link href="/dashboard" className="text-muted-foreground hover:text-white p-2 border border-border bg-card rounded hover:border-muted-foreground/30 transition">
+              <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="space-y-0.5">
-              <h1 className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-2">
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold font-display tracking-tight text-white flex items-center gap-2">
                 {project.name}
               </h1>
-              <p className="text-xs text-neutral-400 line-clamp-1 max-w-[200px] sm:max-w-md">
-                {project.description || "No description provided."}
+              <p className="text-[10px] text-muted-foreground line-clamp-1 max-w-[200px] sm:max-w-md font-mono uppercase">
+                {project.description || "NO BASELINE PARAMETERS DEFINED"}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border border-white/5 bg-black/30 p-1.5 rounded-2xl text-xs font-semibold">
+          {/* Navigation Tabs (Tactile instrument switches) */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 border border-border bg-background/50 p-1 rounded font-mono text-[10px] font-bold">
               <button
                 onClick={() => setActiveTab("overview")}
-                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "overview" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                  }`}
+                className={`px-3 py-1.5 rounded transition uppercase cursor-pointer ${activeTab === "overview" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"}`}
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab("comments")}
-                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "comments" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                  }`}
+                className={`px-3 py-1.5 rounded transition uppercase cursor-pointer ${activeTab === "comments" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"}`}
               >
-                Comments ({rawComments.length})
+                Log ({rawComments.length})
               </button>
               <button
                 onClick={() => setActiveTab("chat")}
-                className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${activeTab === "chat" ? "bg-primary text-white" : "text-neutral-400 hover:text-white"
-                  }`}
+                className={`px-3 py-1.5 rounded transition uppercase cursor-pointer ${activeTab === "chat" ? "bg-primary text-black" : "text-muted-foreground hover:text-white"}`}
               >
                 AI Chat
               </button>
@@ -302,8 +320,8 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
             
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="inline-flex items-center justify-center p-2 rounded-xl glass-panel border-white/10 text-neutral-400 hover:text-white transition cursor-pointer"
-              title="Sign Out"
+              className="p-2 border border-border bg-card text-muted-foreground hover:text-white rounded transition cursor-pointer"
+              title="Terminate Session"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -312,99 +330,105 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
         </div>
       </header>
 
-      {/* Detail Workspace */}
+      {/* Detail Workspace Frame */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 z-10">
 
         {/* OVERVIEW TAB */}
         {activeTab === "overview" && (
-          <div className="space-y-8 animate-fade-in">
-            {/* Top Grid: Main stats */}
+          <div className="space-y-8">
+            
+            {/* Top Grid: System Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
-              <div className="p-5 rounded-2xl glass-panel relative overflow-hidden flex flex-col justify-between h-[100px]">
-                <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Comments Ingested</span>
-                <span className="text-2xl font-extrabold font-display">{projectStats.totalComments}</span>
+              <div className="instrument-card rounded p-5 flex flex-col justify-between h-[100px]">
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">INGESTED COUNT</span>
+                <span className="text-2xl font-bold font-mono telemetry-val text-white">{projectStats.totalComments}</span>
               </div>
-              <div className="p-5 rounded-2xl glass-panel relative overflow-hidden flex flex-col justify-between h-[100px]">
-                <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Sentiment Score</span>
-                <span className="text-2xl font-extrabold font-display text-emerald-400">
-                  {Math.round((projectStats.sentimentBreakdown.positive / (projectStats.totalComments || 1)) * 100)}% <span className="text-xs font-medium text-neutral-400 font-sans">Positive</span>
+              <div className="instrument-card rounded p-5 flex flex-col justify-between h-[100px]">
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">SATISFACTION RATE</span>
+                <span className="text-2xl font-bold font-mono telemetry-val text-accent">
+                  {Math.round((projectStats.sentimentBreakdown.positive / (projectStats.totalComments || 1)) * 100)}%
                 </span>
               </div>
-              <div className="p-5 rounded-2xl glass-panel relative overflow-hidden flex flex-col justify-between h-[100px]">
-                <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Average Toxicity</span>
-                <span className="text-2xl font-extrabold font-display text-rose-400">
+              <div className="instrument-card rounded p-5 flex flex-col justify-between h-[100px]">
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">TOXIC FACTOR</span>
+                <span className="text-2xl font-bold font-mono telemetry-val text-rose-500">
                   {Math.round(projectStats.averageToxicity * 100)}%
                 </span>
               </div>
-              <div className="p-5 rounded-2xl glass-panel relative overflow-hidden flex flex-col justify-between h-[100px]">
-                <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Source Channel</span>
-                <span className="inline-flex items-center gap-1 text-sm font-bold text-white mt-1 capitalize">
+              <div className="instrument-card rounded p-5 flex flex-col justify-between h-[100px]">
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">INGEST_NODE</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-white uppercase tracking-wider">
                   {project.sourceType === "youtube" ? (
                     <>
-                      <YoutubeIcon className="w-4 h-4 text-red-500" />
-                      YouTube
+                      <YoutubeIcon className="w-3.5 h-3.5 text-red-500" />
+                      YT_SCRAP
                     </>
                   ) : project.sourceType === "reddit" ? (
                     <>
-                      <span className="w-4 h-4 bg-orange-600 rounded-full flex items-center justify-center text-white text-[9px] font-bold font-display">r</span>
-                      Reddit
+                      <RedditIcon className="w-3.5 h-3.5 text-orange-500" />
+                      RD_THREAD
                     </>
                   ) : project.sourceType === "csv" ? (
                     <>
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                      CSV Upload
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
+                      CSV_FILE
                     </>
                   ) : (
                     <>
-                      <MessageSquare className="w-4 h-4 text-blue-500" />
-                      Manual Input
+                      <MessageSquare className="w-3.5 h-3.5 text-accent" />
+                      TXT_LOG
                     </>
                   )}
                 </span>
               </div>
             </div>
 
-            {/* Visuals row */}
+            {/* Visual Analytics Matrices */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Chart: Sentiment */}
-              <div className="p-5 rounded-2xl glass-panel flex flex-col items-center justify-between min-h-[300px]">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 w-full text-left">Sentiment Share</h3>
+              
+              {/* Pie: Sentiment share */}
+              <div className="instrument-card rounded p-5 flex flex-col items-center justify-between min-h-[300px] crt-grid">
+                <h3 className="text-[9px] font-mono font-bold uppercase tracking-widest text-muted-foreground w-full text-left">
+                  SENTIMENT SHARE MATRIX
+                </h3>
                 {mounted && (
-                  <div className="w-full h-[200px] flex items-center justify-center mt-4">
+                  <div className="w-full h-[200px] flex items-center justify-center mt-2 font-mono text-[10px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={sentimentChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
+                          innerRadius={55}
+                          outerRadius={75}
+                          paddingAngle={4}
                           dataKey="value"
                         >
                           {sentimentChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend iconSize={8} iconType="circle" />
+                        <Tooltip contentStyle={{ background: '#0f1422', borderColor: '#22283a', fontFamily: 'monospace' }} />
+                        <Legend iconSize={6} iconType="circle" wrapperStyle={{ fontFamily: 'monospace', fontSize: '9px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 )}
               </div>
 
-              {/* Chart: Topics */}
-              <div className="p-5 rounded-2xl glass-panel flex flex-col justify-between min-h-[300px] lg:col-span-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Feedback Topic Mappings</h3>
+              {/* Bar: Topic Classifiers */}
+              <div className="instrument-card rounded p-5 flex flex-col justify-between min-h-[300px] lg:col-span-2 crt-grid">
+                <h3 className="text-[9px] font-mono font-bold uppercase tracking-widest text-muted-foreground w-full text-left">
+                  TOPIC CLASSIFIER LOGS
+                </h3>
                 {mounted && (
-                  <div className="w-full h-[220px] mt-4">
+                  <div className="w-full h-[220px] mt-2 font-mono text-[10px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={topicChartData}>
-                        <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                        <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                        <XAxis dataKey="name" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                        <Tooltip cursor={{ fill: "rgba(255,255,255,0.02)" }} contentStyle={{ background: '#0f1422', borderColor: '#22283a', fontFamily: 'monospace' }} />
+                        <Bar dataKey="count" fill="#ff9f1c" radius={[2, 2, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -412,51 +436,51 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
               </div>
             </div>
 
-            {/* In-depth details row */}
+            {/* In-depth Telemetry Matrices */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-              {/* Left col: Executive summary report */}
-              <div className="lg:col-span-8 p-6 rounded-2xl glass-panel space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <h3 className="font-bold text-base font-display text-white flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-violet-400" />
-                    AI Executive Summary
+              {/* AI summary compilation report */}
+              <div className="lg:col-span-8 instrument-card rounded p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-border/40 pb-3 font-mono">
+                  <h3 className="font-bold text-xs uppercase tracking-widest text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    COMPILER EXECUTIVE SUMMARY_REPORT.LOG
                   </h3>
-                  <span className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Report 1.0.0
+                  <span className="text-[9px] text-muted-foreground font-medium flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    REV 1.0.0
                   </span>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-neutral-300 text-xs leading-relaxed space-y-4 font-sans whitespace-pre-wrap">
+                <div className="prose prose-invert max-w-none text-neutral-300 text-xs leading-relaxed space-y-4 font-mono whitespace-pre-wrap">
                   {rawReports.length > 0 ? (
                     rawReports[0].summary
                   ) : (
-                    <p className="text-neutral-500 italic">No summary report could be parsed.</p>
+                    <p className="text-muted-foreground italic">Pipeline reports buffer empty.</p>
                   )}
                 </div>
               </div>
 
-              {/* Right col: Top Complaints & Requests lists */}
+              {/* Right Side: Categorized lists */}
               <div className="lg:col-span-4 space-y-6">
 
-                {/* Ranked Complaints */}
-                <div className="p-5 rounded-2xl glass-panel space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                {/* Critical Complaints */}
+                <div className="instrument-card rounded p-5 space-y-4 font-mono">
+                  <h3 className="text-[9px] font-bold uppercase tracking-widest text-rose-400 flex items-center gap-1.5">
                     <Frown className="w-4 h-4" />
-                    Top Complaints
+                    CRITICAL BUG_LOG_CLUSTERS
                   </h3>
                   <div className="space-y-3">
                     {projectStats.topComplaints.length === 0 ? (
-                      <p className="text-xs text-neutral-500 italic">No critical complaint clusters detected.</p>
+                      <p className="text-[10px] text-muted-foreground italic">No anomalies logged in priority queue.</p>
                     ) : (
                       projectStats.topComplaints.map((c, i) => (
-                        <div key={c.id} className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 space-y-1">
-                          <div className="flex items-center justify-between text-[9px] uppercase font-bold text-rose-400">
-                            <span>#{i + 1} complaint</span>
+                        <div key={c.id} className="p-3 border border-rose-500/20 bg-rose-500/5 rounded space-y-1">
+                          <div className="flex items-center justify-between text-[8px] font-bold text-rose-400 uppercase tracking-widest">
+                            <span>#{i + 1} ANOMALY</span>
                             <span>{c.topic}</span>
                           </div>
-                          <p className="text-[11px] text-neutral-300 leading-normal line-clamp-3">
+                          <p className="text-[10px] text-neutral-300 font-mono leading-normal line-clamp-3">
                             "{c.text}"
                           </p>
                         </div>
@@ -466,22 +490,22 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                 </div>
 
                 {/* Feature Requests */}
-                <div className="p-5 rounded-2xl glass-panel space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Feature Requests
+                <div className="instrument-card rounded p-5 space-y-4 font-mono">
+                  <h3 className="text-[9px] font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4" />
+                    COMMUNITY_REQUEST_LOGS
                   </h3>
                   <div className="space-y-3">
                     {projectStats.topFeatureRequests.length === 0 ? (
-                      <p className="text-xs text-neutral-500 italic">No features request clusters logged yet.</p>
+                      <p className="text-[10px] text-muted-foreground italic font-sans">No roadmap requests logged.</p>
                     ) : (
                       projectStats.topFeatureRequests.map((c, i) => (
-                        <div key={c.id} className="p-3 rounded-xl bg-primary/5 border border-primary/10 space-y-1">
-                          <div className="flex items-center justify-between text-[9px] uppercase font-bold text-primary">
-                            <span>#{i + 1} request</span>
+                        <div key={c.id} className="p-3 border border-accent/20 bg-accent/5 rounded space-y-1">
+                          <div className="flex items-center justify-between text-[8px] font-bold text-accent uppercase tracking-widest">
+                            <span>#{i + 1} REQUEST</span>
                             <span>{c.topic}</span>
                           </div>
-                          <p className="text-[11px] text-neutral-300 leading-normal line-clamp-3">
+                          <p className="text-[10px] text-neutral-300 font-mono leading-normal line-clamp-3">
                             "{c.text}"
                           </p>
                         </div>
@@ -496,36 +520,37 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
           </div>
         )}
 
-        {/* COMMENTS TAB */}
+        {/* COMMENTS TAB (Structured Logs Table) */}
         {activeTab === "comments" && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Filter Bar */}
-            <div className="p-4 rounded-2xl glass-panel flex flex-col md:flex-row items-center gap-4">
+          <div className="space-y-6">
+            
+            {/* Telemetry Filter console */}
+            <div className="p-4 border border-border bg-background/50 rounded flex flex-col md:flex-row items-center gap-4 font-mono">
 
-              {/* Search input */}
+              {/* Search query */}
               <div className="relative flex-grow w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search comments or author handle..."
+                  placeholder="QUERY DATA STREAMS (handle or content)..."
                   value={searchText}
                   onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/3 border border-white/15 text-xs outline-none text-white focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition"
+                  className="w-full pl-9 pr-4 py-2 bg-background border border-border text-[10px] outline-none text-white focus:border-primary/50 transition rounded"
                 />
               </div>
 
               {/* Sentiment filter */}
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <SlidersHorizontal className="w-4 h-4 text-neutral-500 hidden sm:block" />
+                <SlidersHorizontal className="w-4 h-4 text-muted-foreground hidden sm:block" />
                 <select
                   value={filterSentiment}
                   onChange={(e) => { setFilterSentiment(e.target.value); setCurrentPage(1); }}
-                  className="w-full md:w-40 px-3 py-2.5 rounded-xl bg-[#0d1020] border border-white/10 text-xs text-neutral-300 focus:border-primary/50 outline-none transition cursor-pointer"
+                  className="w-full md:w-40 px-2.5 py-2 rounded bg-card border border-border text-[10px] text-muted-foreground focus:border-primary/50 outline-none transition cursor-pointer"
                 >
-                  <option value="all">All Sentiments</option>
-                  <option value="positive">Positive</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="negative">Negative</option>
+                  <option value="all">ALL SENTIMENTS</option>
+                  <option value="positive">POSITIVE ONLY</option>
+                  <option value="neutral">NEUTRAL ONLY</option>
+                  <option value="negative">NEGATIVE ONLY</option>
                 </select>
               </div>
 
@@ -534,75 +559,75 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                 <select
                   value={filterTopic}
                   onChange={(e) => { setFilterTopic(e.target.value); setCurrentPage(1); }}
-                  className="w-full md:w-40 px-3 py-2.5 rounded-xl bg-[#0d1020] border border-white/10 text-xs text-neutral-300 focus:border-primary/50 outline-none transition cursor-pointer"
+                  className="w-full md:w-40 px-2.5 py-2 rounded bg-card border border-border text-[10px] text-muted-foreground focus:border-primary/50 outline-none transition cursor-pointer"
                 >
-                  <option value="all">All Topics</option>
-                  <option value="pricing">Pricing</option>
-                  <option value="performance">Performance</option>
-                  <option value="features">Features</option>
-                  <option value="bugs">Bugs</option>
-                  <option value="support">Support</option>
-                  <option value="other">Other</option>
+                  <option value="all">ALL TOPICS</option>
+                  <option value="pricing">PRICING</option>
+                  <option value="performance">PERFORMANCE</option>
+                  <option value="features">FEATURES</option>
+                  <option value="bugs">BUGS</option>
+                  <option value="support">SUPPORT</option>
+                  <option value="other">OTHER</option>
                 </select>
               </div>
             </div>
 
-            {/* Comments List */}
+            {/* Ingested Comments List */}
             {filteredComments.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl border border-white/5 bg-white/2 backdrop-blur-sm">
-                <HelpCircle className="w-10 h-10 text-neutral-600 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-neutral-400">No matching comments found</p>
-                <p className="text-xs text-neutral-500 mt-1">Try resetting your filters or adjusting your search queries.</p>
+              <div className="instrument-card rounded p-12 text-center font-mono">
+                <HelpCircle className="w-9 h-9 text-muted-foreground mx-auto mb-2" />
+                <p className="text-xs font-bold text-white uppercase tracking-wider">No matching logs compiled</p>
+                <p className="text-[10px] text-muted-foreground mt-1 font-sans">Modify search queries or database filter options.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-3">
+                <div className="space-y-3 font-mono">
                   {currentComments.map((comment) => (
                     <div
                       key={comment.id}
-                      className="p-5 rounded-2xl glass-panel hover:bg-white/2 hover:border-white/15 transition-all duration-200 space-y-3 relative overflow-hidden"
+                      className="p-5 border border-border bg-card rounded hover:border-primary/20 transition-all duration-200 space-y-3 relative overflow-hidden"
                     >
-                      {/* Top Header info */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-neutral-300">{comment.author || "Anonymous"}</span>
-                          <span className="text-[10px] text-neutral-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                      {/* Log Header metadata */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2">
+                        <div className="flex items-center gap-2.5 text-[10px]">
+                          <span className="text-white font-bold">{comment.author || "ANONYMOUS_NODE"}</span>
+                          <span className="text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString()}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {/* Sentiment Tag */}
+                          {/* Sentiment tag */}
                           {comment.sentiment === "positive" ? (
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-extrabold uppercase border border-emerald-500/20">
-                              Positive
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-accent/20 bg-accent/10 text-accent text-[8px] font-bold uppercase">
+                              POSITIVE
                             </span>
                           ) : comment.sentiment === "negative" ? (
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 text-[9px] font-extrabold uppercase border border-rose-500/20">
-                              Negative
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-rose-500/20 bg-rose-500/10 text-rose-400 text-[8px] font-bold uppercase">
+                              NEGATIVE
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 text-[9px] font-extrabold uppercase border border-yellow-500/20">
-                              Neutral
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-amber-500/20 bg-amber-500/10 text-amber-500 text-[8px] font-bold uppercase">
+                              NEUTRAL
                             </span>
                           )}
 
-                          {/* Topic Tag */}
+                          {/* Topic tag */}
                           {comment.topic && (
-                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-400 text-[9px] font-bold uppercase">
+                            <span className="px-2 py-0.5 border border-border bg-background text-muted-foreground text-[8px] font-bold uppercase">
                               {comment.topic}
                             </span>
                           )}
 
-                          {/* Toxicity Alert */}
+                          {/* Toxicity flags */}
                           {comment.toxicity !== null && comment.toxicity > 0.4 && (
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 text-[8px] font-extrabold uppercase border border-amber-500/20">
-                              Toxic: {Math.round(comment.toxicity * 100)}%
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-primary/20 bg-primary/10 text-primary text-[8px] font-bold uppercase">
+                              TOX: {Math.round(comment.toxicity * 100)}%
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Comment text */}
-                      <p className="text-xs text-neutral-300 leading-relaxed font-sans">
+                      {/* Content block */}
+                      <p className="text-[11px] text-neutral-300 leading-relaxed font-mono">
                         {comment.text}
                       </p>
                     </div>
@@ -611,26 +636,25 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-6">
-                    <span className="text-[11px] text-neutral-500">
-                      Showing {indexOfFirstComment + 1}–{Math.min(indexOfLastComment, filteredComments.length)} of {filteredComments.length} comments
+                  <div className="flex items-center justify-between border-t border-border/40 pt-4 mt-6 font-mono">
+                    <span className="text-[10px] text-muted-foreground uppercase">
+                      telemetry logs {indexOfFirstComment + 1}–{Math.min(indexOfLastComment, filteredComments.length)} of {filteredComments.length} entries
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="p-1.5 rounded-lg border border-white/5 bg-black/20 text-neutral-400 hover:text-white disabled:opacity-50 hover:bg-white/5 transition"
+                        className="p-1.5 border border-border bg-card text-muted-foreground hover:text-white rounded disabled:opacity-30 transition cursor-pointer"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3.5 h-3.5" />
                       </button>
 
                       {Array.from({ length: totalPages }).map((_, idx) => {
                         const page = idx + 1;
-                        // Limit displayed page indicators if too many
                         if (totalPages > 5 && Math.abs(page - currentPage) > 2 && page !== 1 && page !== totalPages) {
                           if (page === 2 || page === totalPages - 1) {
-                            return <span key={page} className="text-neutral-600 text-xs px-1">...</span>;
+                            return <span key={page} className="text-muted-foreground text-xs px-1">...</span>;
                           }
                           return null;
                         }
@@ -638,9 +662,9 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                           <button
                             key={page}
                             onClick={() => handlePageChange(page)}
-                            className={`w-7 h-7 rounded-lg border text-xs font-semibold transition ${currentPage === page
-                                ? "bg-primary border-primary text-white"
-                                : "border-white/5 bg-black/20 text-neutral-400 hover:text-white hover:bg-white/5"
+                            className={`w-7 h-7 border text-[10px] font-bold uppercase rounded transition cursor-pointer ${currentPage === page
+                                ? "bg-primary border-primary text-black"
+                                : "border-border bg-card text-muted-foreground hover:text-white"
                               }`}
                           >
                             {page}
@@ -651,9 +675,9 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="p-1.5 rounded-lg border border-white/5 bg-black/20 text-neutral-400 hover:text-white disabled:opacity-50 hover:bg-white/5 transition"
+                        className="p-1.5 border border-border bg-card text-muted-foreground hover:text-white rounded disabled:opacity-30 transition cursor-pointer"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -663,81 +687,82 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
           </div>
         )}
 
-        {/* AI CHAT (RAG) TAB */}
+        {/* AI CHAT (Neural Query Console) TAB */}
         {activeTab === "chat" && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[650px] animate-fade-in">
-            {/* Sidebar with suggested prompts */}
-            <div className="lg:col-span-1 p-5 rounded-2xl glass-panel space-y-4 flex flex-col justify-start">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-violet-400 uppercase tracking-wider border-b border-white/5 pb-2">
-                <Sparkles className="w-4 h-4" />
-                <span>Suggested Inquiries</span>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[650px] font-mono">
+            
+            {/* Left Suggested prompts block */}
+            <div className="lg:col-span-1 p-5 instrument-card rounded space-y-4 flex flex-col justify-start crt-grid">
+              <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary uppercase tracking-widest border-b border-border/40 pb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>SUGGESTED DIRECTIVES</span>
               </div>
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => handleSendChat(undefined, "What are the top 3 user complaints?")}
-                  className="p-2.5 rounded-xl border border-white/5 bg-white/2 hover:border-primary/40 hover:bg-primary/5 text-[11px] text-neutral-300 text-left font-medium transition cursor-pointer"
+                  onClick={() => handleSendChat(undefined, "List the top 3 user bug reports or technical issues.")}
+                  className="p-2.5 border border-border bg-background text-[9px] text-left text-neutral-300 rounded hover:border-primary hover:bg-primary/5 transition uppercase leading-tight tracking-wider cursor-pointer"
                   disabled={chatLoading}
                 >
-                  What are the top 3 user complaints?
+                  List top 3 bug reports
                 </button>
                 <button
-                  onClick={() => handleSendChat(undefined, "What features are users requesting next?")}
-                  className="p-2.5 rounded-xl border border-white/5 bg-white/2 hover:border-primary/40 hover:bg-primary/5 text-[11px] text-neutral-300 text-left font-medium transition cursor-pointer"
+                  onClick={() => handleSendChat(undefined, "What features are requested most by the community?")}
+                  className="p-2.5 border border-border bg-background text-[9px] text-left text-neutral-300 rounded hover:border-primary hover:bg-primary/5 transition uppercase leading-tight tracking-wider cursor-pointer"
                   disabled={chatLoading}
                 >
-                  What features are users requesting next?
+                  What features are requested?
                 </button>
                 <button
-                  onClick={() => handleSendChat(undefined, "What are the common performance or speed complaints?")}
-                  className="p-2.5 rounded-xl border border-white/5 bg-white/2 hover:border-primary/40 hover:bg-primary/5 text-[11px] text-neutral-300 text-left font-medium transition cursor-pointer"
+                  onClick={() => handleSendChat(undefined, "What are the common performance or latency issues?")}
+                  className="p-2.5 border border-border bg-background text-[9px] text-left text-neutral-300 rounded hover:border-primary hover:bg-primary/5 transition uppercase leading-tight tracking-wider cursor-pointer"
                   disabled={chatLoading}
                 >
-                  What are common performance complaints?
+                  What are performance complaints?
                 </button>
                 <button
                   onClick={() => handleSendChat(undefined, "Why are users happy with this product?")}
-                  className="p-2.5 rounded-xl border border-white/5 bg-white/2 hover:border-primary/40 hover:bg-primary/5 text-[11px] text-neutral-300 text-left font-medium transition cursor-pointer"
+                  className="p-2.5 border border-border bg-background text-[9px] text-left text-neutral-300 rounded hover:border-primary hover:bg-primary/5 transition uppercase leading-tight tracking-wider cursor-pointer"
                   disabled={chatLoading}
                 >
-                  Why are users happy with this product?
+                  Why are users happy?
                 </button>
               </div>
             </div>
 
-            {/* Chat Box */}
-            <div className="lg:col-span-3 rounded-2xl glass-panel flex flex-col h-full overflow-hidden border border-white/5">
+            {/* Chat screen */}
+            <div className="lg:col-span-3 rounded border border-border bg-card flex flex-col h-full overflow-hidden">
 
-              {/* Messages viewport */}
-              <div className="flex-grow p-6 overflow-y-auto space-y-4 flex flex-col scroll-smooth">
+              {/* Console log display viewport */}
+              <div className="flex-grow p-6 overflow-y-auto space-y-5 flex flex-col scroll-smooth font-mono">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex flex-col max-w-[85%] space-y-1.5 ${msg.sender === "user" ? "self-end items-end" : "self-start items-start"
-                      }`}
+                    className={`flex flex-col max-w-[85%] space-y-1 ${msg.sender === "user" ? "self-end items-end animate-fade-in" : "self-start items-start animate-fade-in"}`}
                   >
-                    {/* Header */}
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-neutral-500 uppercase tracking-wider">
-                      {msg.sender === "user" ? "You" : "Scanner Feedback AI"}
+                    {/* Log metadata header */}
+                    <div className="flex items-center gap-1.5 text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
+                      {msg.sender === "user" ? "SYS_OPERATOR" : "AI_INFERENCE_ENGINE"}
                     </div>
 
-                    {/* Content Box */}
+                    {/* Console body panel */}
                     <div
-                      className={`p-4 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${msg.sender === "user"
-                          ? "bg-primary text-white rounded-tr-none"
-                          : "bg-white/5 border border-white/10 text-neutral-200 rounded-tl-none"
-                        }`}
+                      className={`p-4 border text-[11px] leading-relaxed whitespace-pre-wrap rounded ${
+                        msg.sender === "user"
+                          ? "bg-primary/10 border-primary text-white"
+                          : "bg-background border-border text-neutral-200"
+                      }`}
                     >
                       {msg.text}
                     </div>
 
-                    {/* Source References */}
+                    {/* Retrieval logs sources */}
                     {msg.sources && msg.sources.length > 0 && (
-                      <div className="w-full text-left space-y-1 pl-1">
-                        <span className="text-[9px] uppercase font-bold text-neutral-600 block">retrieved sources:</span>
+                      <div className="w-full text-left space-y-1 mt-1 pl-1">
+                        <span className="text-[8px] uppercase font-bold text-muted-foreground block tracking-wider">RETRIEVED VECTOR SOURCES:</span>
                         {msg.sources.map((src, sIdx) => (
                           <span
                             key={sIdx}
-                            className="block p-1.5 rounded bg-black/30 border border-white/5 text-[10px] text-neutral-500 line-clamp-1 italic font-sans"
+                            className="block p-1.5 rounded bg-background/50 border border-border text-[9px] text-muted-foreground line-clamp-1 italic font-sans"
                             title={src}
                           >
                             "{src}"
@@ -749,29 +774,29 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                 ))}
 
                 {chatLoading && (
-                  <div className="self-start flex flex-col items-start space-y-1.5 max-w-[80%]">
-                    <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Scanner Feedback AI</span>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-neutral-400 rounded-tl-none flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      Retrieving database records and generating response...
+                  <div className="self-start flex flex-col items-start space-y-1 max-w-[80%]">
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">AI_INFERENCE_ENGINE</span>
+                    <div className="p-4 rounded border border-border bg-background text-[10px] text-muted-foreground flex items-center gap-2.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                      FETCHING DATA VECTORS AND RETRIEVING EMBEDDINGS...
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Chat Input */}
-              <form onSubmit={handleSendChat} className="p-4 border-t border-white/5 bg-black/30 flex items-center gap-2">
+              {/* Chat Input interface */}
+              <form onSubmit={handleSendChat} className="p-4 border-t border-border bg-background/60 flex items-center gap-2.5">
                 <input
                   type="text"
-                  placeholder="Ask a question about comments (e.g. why are users complaining?)..."
+                  placeholder="QUERY RAW DATA VECTORS (e.g. why are users happy?)..."
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-grow px-4 py-2.5 rounded-xl bg-white/3 border border-white/10 text-xs text-white outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition"
+                  className="flex-grow px-4 py-2.5 bg-background border border-border rounded text-[10px] text-white outline-none focus:border-primary/50 transition font-mono uppercase"
                   disabled={chatLoading}
                 />
                 <button
                   type="submit"
-                  className="p-2.5 rounded-xl bg-primary hover:bg-primary/95 text-white active:scale-95 transition disabled:opacity-50 cursor-pointer"
+                  className="p-2.5 border border-primary bg-primary/15 text-primary rounded hover:bg-primary hover:text-black active:scale-95 transition disabled:opacity-50 cursor-pointer"
                   disabled={chatLoading || !chatInput.trim()}
                 >
                   <Send className="w-4 h-4" />
