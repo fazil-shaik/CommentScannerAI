@@ -9,3 +9,4 @@ matplotlib
 seaborn
 gunicorn
 psutil
+youtube-comment-downloader
