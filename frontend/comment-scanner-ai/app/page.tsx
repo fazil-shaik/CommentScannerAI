@@ -36,20 +36,6 @@ const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const RedditIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 8v8M8 12h8" />
-  </svg>
-);
 
 interface ScannerPreset {
   name: string;
@@ -75,17 +61,7 @@ const PRESETS: ScannerPreset[] = [
     emotion: "Joy",
     summary: "Satisfied with database migration speed; requests direct PostgreSQL support."
   },
-  {
-    name: "Reddit Product Rant",
-    source: "reddit",
-    comment: "Honestly, the auth flow is completely broken on Safari. It keeps loop redirecting and I can't even get to the billing screen. I'm about to request a refund, please fix this.",
-    sentiment: "negative",
-    sentimentScore: 0.88,
-    topic: "Bug Report",
-    toxicity: 0.14,
-    emotion: "Frustration",
-    summary: "Safari redirect loop in authentication flow is blocking billing access."
-  },
+
   {
     name: "Abusive Forum Node",
     source: "manual",
@@ -251,7 +227,7 @@ export default function Home() {
                 </span>
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed font-sans">
-                Stop reading thousands of scattered forum logs. CommentScanner AI processes raw, unstructured text streams from YouTube, Reddit, and CSV files, converting public chaos into clear, structured product decisions.
+                Stop reading thousands of scattered forum logs. CommentScanner AI processes raw, unstructured text streams from YouTube and CSV files, converting public chaos into clear, structured product decisions.
               </p>
             </div>
 
@@ -538,7 +514,7 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-bold text-white tracking-tight font-display mb-2 group-hover:text-primary transition">INGESTION NODES</h3>
             <p className="text-xs text-muted-foreground leading-relaxed font-mono uppercase tracking-wide">
-              Scrapes YouTube API responses, monitors subreddits, parses CSV datasets, or handles manual pastes in seconds.
+              Scrapes YouTube API responses, parses CSV datasets, or handles manual pastes in seconds.
             </p>
           </div>
 
@@ -552,10 +528,6 @@ export default function Home() {
           <div className="flex items-center gap-2 hover:text-white transition">
             <YoutubeIcon className="w-4 h-4 text-red-500" />
             <span className="text-[11px] font-semibold tracking-wider">YOUTUBE COMMENTS SCAPE</span>
-          </div>
-          <div className="flex items-center gap-2 hover:text-white transition">
-            <RedditIcon className="w-4 h-4 text-orange-500" />
-            <span className="text-[11px] font-semibold tracking-wider">REDDIT DISCUSSION NODE</span>
           </div>
           <div className="flex items-center gap-2 hover:text-white transition">
             <FileSpreadsheet className="w-4 h-4 text-emerald-500" />

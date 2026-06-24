@@ -3,8 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CommentScanner AI - Customer Feedback Intelligence Platform",
-  description: "Aggregate comments from YouTube, Reddit, CSV, and manual feedback. Classify sentiment, detect toxicity and emotion, and query your feedback with AI Chat.",
-  keywords: ["customer intelligence", "feedback analysis", "sentiment analysis", "NLP dashboard", "YouTube comments analyzer", "Reddit discussions insights", "product roadmap tools"],
+  description: "Aggregate comments from YouTube, CSV, and manual feedback. Classify sentiment, detect toxicity and emotion, and query your feedback with AI Chat.",
+  keywords: ["customer intelligence", "feedback analysis", "sentiment analysis", "NLP dashboard", "YouTube comments analyzer", "product roadmap tools"],
 };
 
 export default function RootLayout({

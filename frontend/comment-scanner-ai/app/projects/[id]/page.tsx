@@ -46,20 +46,6 @@ const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const RedditIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 8v8M8 12h8" />
-  </svg>
-);
 
 interface Comment {
   id: number;
@@ -463,11 +449,6 @@ export default function ProjectDetail({ params }: { params: Promise<{ id: string
                     <>
                       <YoutubeIcon className="w-3.5 h-3.5 text-red-500" />
                       YT_SCRAP
-                    </>
-                  ) : project.sourceType === "reddit" ? (
-                    <>
-                      <RedditIcon className="w-3.5 h-3.5 text-orange-500" />
-                      RD_THREAD
                     </>
                   ) : project.sourceType === "csv" ? (
                     <>

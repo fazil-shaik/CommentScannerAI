@@ -1,7 +1,36 @@
 import httpx
 import re
 import traceback
+import os
 from youtube_comment_downloader import YoutubeCommentDownloader, SORT_BY_POPULAR
+
+def load_env():
+    # Attempt to load .env from several possible directories
+    possible_paths = [
+        ".env",
+        "../.env",
+        "../../.env",
+        "frontend/comment-scanner-ai/.env",
+        "../frontend/comment-scanner-ai/.env"
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            parts = line.split("=", 1)
+                            if len(parts) == 2:
+                                key, value = parts
+                                key = key.strip()
+                                value = value.strip().strip("'\"")
+                                if key not in os.environ:
+                                    os.environ[key] = value
+                print(f"Loaded environment variables from {path}")
+                break
+            except Exception as e:
+                print(f"Failed loading environment variables from {path}: {e}")
 
 def scrape_youtube_comments(url_or_id: str, max_comments: int = 30) -> list:
     """
@@ -34,70 +63,3 @@ def scrape_youtube_comments(url_or_id: str, max_comments: int = 30) -> list:
         traceback.print_exc()
         return []
 
-def scrape_reddit_comments(url: str, max_comments: int = 30) -> list:
-    """
-    Scrape Reddit comments by appending .json to the URL.
-    No Reddit API client key required!
-    """
-    try:
-        # Standardize URL: strip trailing slash and add .json
-        clean_url = url.split("?")[0].rstrip("/")
-        if not clean_url.endswith(".json"):
-            json_url = f"{clean_url}.json"
-        else:
-            json_url = clean_url
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-
-        with httpx.Client() as client:
-            resp = client.get(json_url, headers=headers, follow_redirects=True, timeout=15.0)
-            if resp.status_code != 200:
-                print(f"Reddit returned status code {resp.status_code}")
-                return []
-            
-            data = resp.json()
-            # Reddit API returns a list [post_listing, comments_listing]
-            if not isinstance(data, list) or len(data) < 2:
-                print("Unexpected Reddit JSON response format")
-                return []
-
-            comment_listing = data[1]
-            children = comment_listing.get("data", {}).get("children", [])
-
-            extracted = []
-
-            def recurse(nodes):
-                for node in nodes:
-                    if len(extracted) >= max_comments:
-                        break
-                    
-                    kind = node.get("kind")
-                    node_data = node.get("data", {})
-                    
-                    # Ignore 'more' markers
-                    if kind == "more":
-                        continue
-                        
-                    body = node_data.get("body")
-                    author = node_data.get("author")
-                    
-                    if body and author and body != "[deleted]" and body != "[removed]":
-                        extracted.append({
-                            "text": body.strip(),
-                            "author": f"u/{author}",
-                            "platform": "Reddit"
-                        })
-                        
-                    replies = node_data.get("replies")
-                    if isinstance(replies, dict):
-                        replies_children = replies.get("data", {}).get("children", [])
-                        recurse(replies_children)
-
-            recurse(children)
-            return extracted
-    except Exception as e:
-        print(f"Error scraping Reddit comments: {e}")
-        traceback.print_exc()
-        return []

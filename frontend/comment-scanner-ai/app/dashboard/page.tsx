@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Plus, 
-  FileSpreadsheet, 
-  MessageSquare, 
-  Trash2, 
-  Folder, 
-  Calendar, 
-  Loader2, 
+import {
+  Plus,
+  FileSpreadsheet,
+  MessageSquare,
+  Trash2,
+  Folder,
+  Calendar,
+  Loader2,
   X,
   UploadCloud,
   Layers,
@@ -38,20 +38,6 @@ const YoutubeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const RedditIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 8v8M8 12h8" />
-  </svg>
-);
 
 interface Project {
   id: number;
@@ -66,7 +52,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  
+
   // Form State
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -123,7 +109,7 @@ export default function Dashboard() {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm("Confirm command: PURGE project database node? This action deletes all associated feedback files and summary matrices permanently.")) return;
-    
+
     try {
       setDeletingId(id);
       const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
@@ -181,14 +167,14 @@ export default function Dashboard() {
     } else {
       finalData = inputText;
       if (!finalData.trim()) {
-        setErrorMsg(`Error: URL is required for target ${sourceType === "youtube" ? "YouTube" : "Reddit"} scraping node.`);
+        setErrorMsg("Error: URL is required for target YouTube scraping node.");
         return;
       }
     }
 
     try {
       setCreating(true);
-      
+
       // Step 1: Create Project
       const projectRes = await fetch("/api/projects", {
         method: "POST",
@@ -228,7 +214,7 @@ export default function Dashboard() {
       setCsvContent("");
       setCsvFileName("");
       setModalOpen(false);
-      
+
       fetchProjects();
     } catch (err: any) {
       console.error(err);
@@ -240,10 +226,10 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground flex flex-col font-sans select-none">
-      
+
       {/* Structural Wire Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-      
+
       {/* Background glow flares */}
       <div className="absolute top-[-10%] right-[-10%] w-[350px] h-[350px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[350px] h-[350px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
@@ -287,7 +273,7 @@ export default function Dashboard() {
 
       {/* Main Workspace Frame */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-8 space-y-8 z-10">
-        
+
         {/* Hardware Status Warnings: Connection Error */}
         {dbError && (
           <div className="instrument-card instrument-card-glow rounded p-5 flex flex-col md:flex-row items-start gap-4 crt-grid">
@@ -375,11 +361,6 @@ export default function Dashboard() {
                           <YoutubeIcon className="w-3 h-3" />
                           YT_STREAM
                         </span>
-                      ) : project.sourceType === "reddit" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-orange-500/20 bg-orange-500/10 text-orange-400 font-mono text-[8px] font-bold uppercase">
-                          <RedditIcon className="w-3 h-3" />
-                          REDDIT_THREAD
-                        </span>
                       ) : project.sourceType === "csv" ? (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-mono text-[8px] font-bold uppercase">
                           <FileSpreadsheet className="w-3 h-3" />
@@ -437,7 +418,7 @@ export default function Dashboard() {
       {modalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-xl rounded instrument-card bg-background overflow-hidden flex flex-col border border-border/70 shadow-2xl crt-grid">
-            
+
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -492,11 +473,10 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setSourceType("manual")}
-                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
-                      sourceType === "manual"
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${sourceType === "manual"
                         ? "bg-accent/10 border-accent text-accent font-bold"
                         : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
-                    }`}
+                      }`}
                     disabled={creating}
                   >
                     <MessageSquare className="w-4 h-4" />
@@ -506,11 +486,10 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setSourceType("csv")}
-                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
-                      sourceType === "csv"
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${sourceType === "csv"
                         ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 font-bold"
                         : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
-                    }`}
+                      }`}
                     disabled={creating}
                   >
                     <FileSpreadsheet className="w-4 h-4" />
@@ -520,30 +499,16 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setSourceType("youtube")}
-                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
-                      sourceType === "youtube"
+                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${sourceType === "youtube"
                         ? "bg-red-500/10 border-red-500 text-red-400 font-bold"
                         : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
-                    }`}
+                      }`}
                     disabled={creating}
                   >
                     <YoutubeIcon className="w-4 h-4" />
                     <span className="text-[8px] uppercase tracking-widest">YT_STREAM</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSourceType("reddit")}
-                    className={`p-3 border rounded flex flex-col items-center justify-center gap-1.5 text-center transition cursor-pointer ${
-                      sourceType === "reddit"
-                        ? "bg-orange-500/10 border-orange-500 text-orange-400 font-bold"
-                        : "bg-background border-border text-muted-foreground hover:bg-card hover:text-white"
-                    }`}
-                    disabled={creating}
-                  >
-                    <RedditIcon className="w-4 h-4" />
-                    <span className="text-[8px] uppercase tracking-widest">RD_THREAD</span>
-                  </button>
                 </div>
               </div>
 
@@ -586,14 +551,14 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {(sourceType === "youtube" || sourceType === "reddit") && (
+              {sourceType === "youtube" && (
                 <div className="space-y-1.5 font-mono">
                   <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block">
-                    {sourceType === "youtube" ? "[ YT_VIDEO_COORDINATES ]" : "[ RD_POST_COORDINATES ]"}
+                    [ YT_VIDEO_COORDINATES ]
                   </label>
                   <input
                     type="url"
-                    placeholder={sourceType === "youtube" ? "https://www.youtube.com/watch?v=..." : "https://www.reddit.com/r/..."}
+                    placeholder="https://www.youtube.com/watch?v=..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded bg-background border border-border text-xs text-white outline-none focus:border-primary/50 transition"
@@ -618,15 +583,12 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2 border text-xs uppercase font-bold text-white transition flex items-center gap-1.5 rounded cursor-pointer ${
-                    sourceType === "csv" 
-                      ? "bg-emerald-600 border-emerald-500 hover:bg-emerald-500" 
-                      : sourceType === "youtube" 
-                      ? "bg-red-600 border-red-500 hover:bg-red-500" 
-                      : sourceType === "reddit"
-                      ? "bg-orange-600 border-orange-500 hover:bg-orange-500"
-                      : "bg-primary border-primary hover:bg-primary/90 text-white"
-                  }`}
+                  className={`px-5 py-2 border text-xs uppercase font-bold text-white transition flex items-center gap-1.5 rounded cursor-pointer ${sourceType === "csv"
+                      ? "bg-emerald-600 border-emerald-500 hover:bg-emerald-500"
+                      : sourceType === "youtube"
+                        ? "bg-red-600 border-red-500 hover:bg-red-500"
+                        : "bg-primary border-primary hover:bg-primary/90 text-white"
+                    }`}
                   disabled={creating}
                 >
                   {creating ? (

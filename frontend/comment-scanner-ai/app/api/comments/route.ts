@@ -25,77 +25,138 @@ const YOUTUBE_MOCK_COMMENTS = [
   { text: "Is there a mobile app in the roadmap? Checking analytics on the go would be epic.", author: "RoadWarrior", platform: "YouTube" },
 ];
 
-const REDDIT_MOCK_COMMENTS = [
-  { text: "Honestly, the sentiment analysis accuracy is surprisingly good. Spot on.", author: "u/SaaSFounder", platform: "Reddit" },
-  { text: "Is anyone else getting login issues? I keep getting redirected to the landing page.", author: "u/StuckInLoop", platform: "Reddit" },
-  { text: "The free tier is generous, but the $49/mo jump is way too high for pre-revenue startups.", author: "u/Bootstrapper", platform: "Reddit" },
-  { text: "I love the emotion detection chart. Helps us spot angry customers before they churn.", author: "u/CustomerSuccessHero", platform: "Reddit" },
-  { text: "This is garbage. The API doesn't support basic filtering.", author: "u/TrollFace", platform: "Reddit" },
-  { text: "Does it support Reddit scraping? Oh wait, I'm reading comments fetched from Reddit right now lol.", author: "u/MetaPoster", platform: "Reddit" },
-  { text: "The documentation is missing key details on how to format CSV column headers.", author: "u/DocReader", platform: "Reddit" },
-  { text: "It's super snappy. Under 2s dashboard load is true.", author: "u/FastRunner", platform: "Reddit" },
-  { text: "I want an automated email digest of complaints once a week.", author: "u/InboxZero", platform: "Reddit" },
-  { text: "This has saved my product team hours of manual sorting on YouTube comment sections.", author: "u/SavesTime", platform: "Reddit" },
-  { text: "Does it filter out spam/links? Some comments are just bots.", author: "u/SpamFilterNeeded", platform: "Reddit" },
-  { text: "Had a billing issue and the founder personally emailed me to fix it. Massive respect.", author: "u/RespectDevs", platform: "Reddit" },
-];
 
-// Helper to parse CSV manually
+// Helper to parse CSV manually and robustly
 function parseCSV(csvText: string): string[] {
-  const lines: string[] = [];
-  let currentLine = "";
+  if (!csvText || !csvText.trim()) return [];
+
+  // 1. Detect delimiter (comma, semicolon, or tab)
+  const firstLine = csvText.split('\n')[0] || '';
+  let delimiter = ',';
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+
+  if (semiCount > commaCount && semiCount > tabCount) {
+    delimiter = ';';
+  } else if (tabCount > commaCount && tabCount > semiCount) {
+    delimiter = '\t';
+  }
+
+  // 2. Parse CSV rows handling quoted values and newlines within quotes
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
   let insideQuotes = false;
 
   for (let i = 0; i < csvText.length; i++) {
     const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
     if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "\n" && !insideQuotes) {
-      lines.push(currentLine);
-      currentLine = "";
+      if (insideQuotes && nextChar === '"') {
+        // Escaped quote: "" inside quotes -> append single quote and skip next
+        currentCell += '"';
+        i++;
+      } else {
+        // Toggle quote state
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === delimiter && !insideQuotes) {
+      // Cell boundary
+      currentRow.push(currentCell.trim());
+      currentCell = '';
+    } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+      // Row boundary (skip empty chars, handle \r\n)
+      if (char === '\r' && nextChar === '\n') {
+        i++; // skip \n
+      }
+      currentRow.push(currentCell.trim());
+      if (currentRow.some(cell => cell !== '')) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      currentCell = '';
     } else {
-      currentLine += char;
+      currentCell += char;
     }
   }
-  if (currentLine) {
-    lines.push(currentLine);
+
+  // Push final cell and row if anything remains
+  if (currentCell || currentRow.length > 0) {
+    currentRow.push(currentCell.trim());
+    if (currentRow.some(cell => cell !== '')) {
+      rows.push(currentRow);
+    }
   }
 
-  if (lines.length <= 1) return [];
+  if (rows.length === 0) return [];
 
-  // Parse header to find target column (e.g. comment, text, review, message)
-  const header = lines[0].toLowerCase().split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-  let targetIndex = header.findIndex((h) => ["comment", "text", "review", "message", "body", "content"].includes(h));
-  
+  // Extract header and rows
+  const header = rows[0].map(h => h.toLowerCase().replace(/^["']|["']$/g, '').trim());
+  const dataRows = rows.slice(1);
+
+  if (dataRows.length === 0) return [];
+
+  // 3. Auto-detect the comment column
+  // Try to find a header match first
+  const matchKeywords = ["comment", "text", "review", "message", "body", "content", "feedback", "description"];
+  let targetIndex = -1;
+
+  for (const kw of matchKeywords) {
+    targetIndex = header.findIndex(h => h === kw || h.includes(kw));
+    if (targetIndex !== -1) break;
+  }
+
+  // If no header matches, score each column by average content length and text traits
   if (targetIndex === -1) {
-    // Fallback to first column
-    targetIndex = 0;
-  }
+    let bestColIndex = 0;
+    let maxScore = -1;
 
-  const parsedComments: string[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim()) continue;
-    
-    // Split line by comma respecting quotes
-    const cells: string[] = [];
-    let currentCell = "";
-    let inQuotes = false;
-    for (let j = 0; j < line.length; j++) {
-      const c = line[j];
-      if (c === '"') {
-        inQuotes = !inQuotes;
-      } else if (c === "," && !inQuotes) {
-        cells.push(currentCell.trim().replace(/^"|"$/g, ""));
-        currentCell = "";
-      } else {
-        currentCell += c;
+    const numCols = rows[0].length;
+    for (let colIdx = 0; colIdx < numCols; colIdx++) {
+      let totalLength = 0;
+      let wordCount = 0;
+      let nonNumericCount = 0;
+      let rowCount = 0;
+
+      for (const row of dataRows) {
+        if (colIdx < row.length) {
+          const val = row[colIdx];
+          totalLength += val.length;
+          wordCount += val.split(/\s+/).length;
+          if (isNaN(Number(val)) && val.trim() !== '') {
+            nonNumericCount++;
+          }
+          rowCount++;
+        }
+      }
+
+      const avgLength = rowCount > 0 ? totalLength / rowCount : 0;
+      const avgWords = rowCount > 0 ? wordCount / rowCount : 0;
+      const nonNumericRatio = rowCount > 0 ? nonNumericCount / rowCount : 0;
+
+      // Score formula: prioritize columns with longer text, multiple words, and text data
+      let score = avgLength * 0.5 + avgWords * 1.5;
+      if (nonNumericRatio > 0.8) score += 10; // heavy bonus for non-numeric text columns
+      if (avgLength > 150) score += 20; // bonus for long paragraphs
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestColIndex = colIdx;
       }
     }
-    cells.push(currentCell.trim().replace(/^"|"$/g, ""));
+    targetIndex = bestColIndex;
+  }
 
-    if (cells[targetIndex]) {
-      parsedComments.push(cells[targetIndex]);
+  // 4. Extract comments from the detected column
+  const parsedComments: string[] = [];
+  for (const row of dataRows) {
+    if (targetIndex < row.length) {
+      const cell = row[targetIndex].replace(/^["']|["']$/g, '').trim();
+      if (cell) {
+        parsedComments.push(cell);
+      }
     }
   }
 
@@ -171,47 +232,17 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         console.error("Error calling Python YouTube scraper:", e);
       }
-      
-      // Fallback if scraping yielded nothing
-      if (commentsToProcess.length === 0) {
-        commentsToProcess = YOUTUBE_MOCK_COMMENTS.map((c) => ({
-          ...c,
-          text: `${c.text} (simulated YouTube comment fallback for ${data.substring(0, 30)})`,
-        }));
-      }
-    } else if (sourceType === "reddit") {
-      // Reddit import: call Python scraper
-      try {
-        const scrapeResponse = await fetch("http://127.0.0.1:8000/scrape/reddit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: data }),
-        });
-        if (scrapeResponse.ok) {
-          const scrapeData = await scrapeResponse.json();
-          commentsToProcess = scrapeData.comments.map((c: any) => ({
-            text: c.text,
-            author: c.author,
-            platform: "Reddit"
-          }));
-        }
-      } catch (e) {
-        console.error("Error calling Python Reddit scraper:", e);
-      }
-      
-      // Fallback if scraping yielded nothing
-      if (commentsToProcess.length === 0) {
-        commentsToProcess = REDDIT_MOCK_COMMENTS.map((c) => ({
-          ...c,
-          text: `${c.text} (simulated Reddit comment fallback for ${data.substring(0, 30)})`,
-        }));
-      }
     } else {
-      return NextResponse.json({ error: "Invalid sourceType. Must be manual, csv, youtube, or reddit." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid sourceType. Must be manual, csv, or youtube." }, { status: 400 });
     }
 
     if (commentsToProcess.length === 0) {
-      return NextResponse.json({ error: "No comments found to process." }, { status: 400 });
+      return NextResponse.json({ error: "No comments found to process. The scraper did not return any comments." }, { status: 400 });
+    }
+
+    // Inspect if the first comment is a system error from backend
+    if (commentsToProcess.length === 1 && commentsToProcess[0].text.startsWith("ERROR:")) {
+      return NextResponse.json({ error: commentsToProcess[0].text.substring(6).trim() }, { status: 400 });
     }
 
     // Call FastAPI ML backend to analyze comments
